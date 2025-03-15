@@ -1,0 +1,1831 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>CMXie 財經管家</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+      :root {
+          --background: #f0f0f0; /* 更亮的淺灰色背景 */
+          --card-bg: #ffffff; /* 白色卡片背景 */
+          --text-primary: #333333; /* 深灰色文字 */
+          --text-secondary: #666666; /* 淺灰色文字 */
+          --primary: #4a90e2; /* 飽和的藍色 */
+          --secondary: #50e3c2; /* 飽和的青色 */
+          --success: #7ed321; /* 飽和的綠色 */
+          --danger: #ff6b6b; /* 飽和的紅色 */
+          --warning: #f8e71c; /* 飽和的黃色 */
+          --info: #4a90e2; /* 飽和的藍色 */
+      }
+
+      body {
+          font-family: 'Helvetica Neue', 'Arial', sans-serif;
+          font-weight: 500;
+          background: var(--background);
+          color: var(--text-primary);
+          margin: 0;
+          padding-bottom: calc(70px + env(safe-area-inset-bottom));
+          height: 100dvh;
+          overflow: auto;
+      }
+
+      .no-account-message {
+          text-align: center;
+          color: var(--text-secondary);
+          font-size: 1rem;
+          padding: 5px;
+      }
+
+      header.header-container {
+          background: var(--card-bg);
+          padding: 16px;
+          border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+          position: sticky;
+          top: 0;
+          z-index: 1000;
+          padding-top: env(safe-area-inset-top);
+          text-align: center;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          gap: 5px;
+          transition: transform 0.3s ease;
+      }
+
+      header.hidden {
+          transform: translateY(-100%);
+      }
+
+      #pageTitle {
+          margin: 0;
+          font-size: 1.5rem;
+          font-weight: 400;
+      }
+
+      .header-dropdown {
+          width: 130px;
+          max-width: 100%;
+          font-size: 0.8rem;
+          color: var(--text-secondary);
+          padding: 4px;
+          text-align: center;
+          height: 35px;
+          border: 1px solid rgba(0, 0, 0, 0.1);
+          border-radius: 4px;
+          background: var(--card-bg);
+      }
+
+      .header-dropdown option {
+          color: var(--text-secondary);
+          font-size: 0.8rem;
+          text-align: center;
+      }
+
+      main.main-container {
+          max-width: 1200px;
+          margin: 0 auto;
+          padding: 3px;
+      }
+
+      .page {
+          display: none;
+      }
+
+      .page.active {
+          display: block;
+      }
+
+      .card-container, .table-container {
+          background: var(--card-bg);
+          border-radius: 8px;
+          padding: 3px;
+          margin: 1px 0;
+          /* border: 1px solid rgba(0, 0, 0, 0.1); */
+      }
+
+      .stock-container {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+          gap: 8px;
+          padding: 6px;
+      }
+
+      .stock-card{
+          background: var(--card-bg);
+          border-radius: 5px;
+          padding: 6px;
+          border: 1px solid rgba(0, 0, 0, 0.1);
+          transition: transform 0.2s ease, box-shadow 0.2s ease;
+          height: auto;
+          min-height: 30px;
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+          overflow: hidden;
+          cursor: pointer;
+      }
+
+      .stock-card:hover{
+          transform: translateY(-2px);
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+
+      .stock-header{
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          font-size: 1.1rem;
+          color: var(--text-secondary);
+          margin-bottom: 8px;
+      }
+
+      .stock-item{
+          font-size: 1.1rem;
+          font-weight: 400;
+          margin-bottom: 8px;
+      }
+
+      .stock-actions{
+          display: flex;
+          gap: 8px;
+          justify-content: center;
+          align-items: center;
+          opacity: 0;
+          height: 0;
+          overflow: hidden;
+          transition: opacity 0.3s ease, height 0.3s ease;
+      }
+
+      .stock-card.active .stock-actions {
+          opacity: 1;
+          height: 50px;
+      }
+
+      .btn-buy {
+          background: var(--success);
+          color: white;
+          padding: 8px 16px;
+          border-radius: 4px;
+          border: none;
+          font-size: 0.9rem;
+          font-weight: 400;
+          text-transform: uppercase;
+          transition: all 0.3s ease;
+      }
+
+      .btn-buy:hover {
+          background: #6bbd46;
+          transform: translateY(-1px);
+      }
+
+      .btn-sell {
+          background: var(--danger);
+          color: white;
+          padding: 8px 16px;
+          border-radius: 4px;
+          border: none;
+          font-size: 0.9rem;
+          font-weight: 400;
+          text-transform: uppercase;
+          transition: all 0.3s ease;
+      }
+
+      .btn-sell:hover {
+          background: #ff4c4c;
+          transform: translateY(-1px);
+      }
+
+      .stock-info {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 8px;
+      }
+
+      .stock-price {
+          font-size: 1.1rem;
+          font-weight: 400;
+      }
+
+      .stock-change {
+          font-size: 1rem;
+          font-weight: 400;
+          display: flex;
+          align-items: center;
+          gap: 4px;
+      }
+
+      .arrow {
+          font-size: 1.2rem;
+      }
+
+      .positive { color: var(--success); }
+      .negative { color: var(--danger); }
+      .neutral { color: var(--text-secondary); }
+
+      .form-control, .form-select {
+          border: 1px solid rgba(0, 0, 0, 0.1);
+          border-radius: 4px;
+          padding: 8px;
+          transition: all 0.3s ease;
+          background: var(--card-bg);
+          color: var(--text-primary);
+      }
+
+      .form-control:focus, .form-select:focus {
+          border-color: var(--primary);
+          box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
+      }
+
+      .btn-custom {
+          background: var(--primary);
+          color: white;
+          padding: 8px 16px;
+          border-radius: 4px;
+          border: none;
+          font-size: 0.9rem;
+          font-weight: 400;
+          text-transform: uppercase;
+          transition: all 0.3s ease;
+      }
+
+      .btn-custom:hover {
+          background: var(--secondary);
+          transform: translateY(-2px);
+      }
+
+      footer.nav-bar {
+          position: fixed;
+          bottom: 0;
+          width: 100%;
+          background: var(--card-bg);
+          border-top: 1px solid rgba(0, 0, 0, 0.1);
+          display: flex;
+          justify-content: space-around;
+          align-items: center;
+          padding-bottom: env(safe-area-inset-bottom);
+          z-index: 1000;
+          transition: transform 0.3s ease;
+      }
+
+      footer.hidden {
+          transform: translateY(100%);
+      }
+
+      .nav-button {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 4px;
+          padding: 8px;
+          text-decoration: none;
+          background: transparent;
+          color: var(--text-secondary);
+          transition: all 0.3s ease;
+      }
+
+      .nav-button.active {
+          color: var(--primary);
+          background: rgba(74, 144, 226, 0.1);
+      }
+
+      .nav-button span {
+          font-size: 0.9rem;
+      }
+
+      .income-row { background-color: rgba(126, 211, 33, 0.1); }
+      .expense-row { background-color: rgba(255, 107, 107, 0.1); }
+      .income-amount { color: var(--success); }
+      .expense-amount { color: var(--danger); }
+      .amount-cell { font-weight: 400; text-align: right; }
+
+      .option-container {
+          display: flex;
+          gap: 12px;
+          margin-bottom: 16px;
+      }
+
+      .option-card {
+          flex: 1;
+          background: var(--card-bg);
+          border-radius: 8px;
+          padding: 12px;
+          text-align: center;
+          border: 1px solid rgba(0, 0, 0, 0.1);
+          cursor: pointer;
+          transition: transform 0.2s ease, box-shadow 0.2s ease;
+      }
+
+      .option-card:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+
+      .option-card h3 {
+          margin: 0;
+          font-size: 1rem;
+          font-weight: 400;
+      }
+
+      .form-content {
+          margin-top: 16px;
+      }
+
+      .form-btn {
+          display: block;
+          margin: 0 auto;
+      }
+
+      .record-card-container {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+          gap: 2px;
+          padding: 3px;
+      }
+
+      .record-card {
+          background: var(--card-bg);
+          border-radius: 8px;
+          padding: 3px;
+          border: 1px solid rgba(0, 0, 0, 0.1);
+          transition: transform 0.2s ease, box-shadow 0.2s ease;
+          height: auto;
+          min-height: 15px;
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+          overflow: hidden;
+      }
+
+      .load-complete-card {
+          background: var(--card-bg);
+          border-radius: 8px;
+          padding: 6px;
+          transition: transform 0.2s ease, box-shadow 0.2s ease;
+          height: 10vh;
+          min-height: 30px;
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+          overflow: hidden;
+      }
+
+      .record-card:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+
+      .record-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          font-size: 0.9rem;
+          color: var(--text-secondary);
+          margin-bottom: 8px;
+      }
+
+      .record-item {
+          font-size: 1.2rem;
+          font-weight: 600;
+          margin-bottom: 8px;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+      }
+
+      .record-actions {
+          display: flex;
+          gap: 8px;
+          justify-content: center;
+          align-items: center;
+          opacity: 0;
+          height: 0;
+          overflow: hidden;
+          transition: opacity 0.3s ease, height 0.3s ease;
+      }
+
+      .record-card.active .record-actions {
+          opacity: 1;
+          height: 45px;
+      }
+
+      .btn-custom.acc-btn {
+          padding: 8px 16px;
+          font-size: 0.9rem;
+          border-radius: 4px;
+      }
+
+      .record-card.income-card {
+          background-color: rgba(126, 211, 33, 0.1);
+      }
+
+      .record-card.expense-card {
+          background-color: rgba(255, 107, 107, 0.1);
+      }
+
+      #accountList {
+          display: none;
+      }
+
+      .summary-card {
+          border-radius: 6px;
+          padding: 3px;
+          margin-bottom: 2px;
+          /* border: 1px solid rgba(0, 0, 0, 0.1); */
+      }
+
+      .summary-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 3px;
+      }
+
+      .summary-item {
+          font-size: 1.1rem;
+          font-weight: 500;
+      }
+
+      .summary-item.income {
+          color: var(--success);
+      }
+
+      .summary-item.expense {
+          color: var(--danger);
+      }
+
+      .ratio-bar {
+          width: 100%;
+          height: 8px;
+          background: #e2e8f0;
+          border-radius: 4px;
+          overflow: hidden;
+          display: flex;
+      }
+
+      .ratio-income {
+          height: 100%;
+          background: var(--success);
+          transition: width 0.5s ease;
+      }
+
+      .ratio-expense {
+          height: 100%;
+          background: var(--danger);
+          transition: width 0.5s ease;
+      }
+
+      .summary-total {
+          text-align: center;
+          font-size: 0.9rem;
+          font-weight: 400;
+          color: var(--text-secondary);
+          margin: 3px 0;
+      }
+
+      #summaryCard {
+          position: sticky;
+          top: 0;
+          z-index: 10;
+          margin: 3px 0;
+      }
+
+      #accountForm, #assetForm {
+          padding: 16px;
+          margin: 0 auto;
+          max-width: 100%;
+      }
+
+      #accountForm .mb-3.compact, #assetForm .mb-3.compact {
+          margin-bottom: 8px;
+      }
+
+      #accountForm .form-label, #assetForm .form-label {
+          font-size: 0.8rem;
+          margin-bottom: 4px;
+          font-weight: 400;
+      }
+
+      #accountForm .form-control, #accountForm .form-select,
+      #assetForm .form-control, #assetForm .form-select {
+          font-size: 0.8rem;
+          padding: 8px;
+          height: 36px;
+          border-radius: 4px;
+      }
+
+      #accountForm .form-select option, #assetForm .form-select option {
+          font-size: 0.8rem;
+      }
+
+      #accountForm .btn-custom.form-btn.compact-btn,
+      #assetForm .btn-custom.form-btn.compact-btn {
+          font-size: 0.9rem;
+          padding: 8px 16px;
+          width: 100px;
+          margin: 8px auto 0;
+          border-radius: 4px;
+      }
+
+      .card-container {
+          overflow-y: auto;
+          max-height: calc(100vh - 120px);
+      }
+
+      #accountForm .btn-custom.form-btn, #assetForm .btn-custom.form-btn {
+          font-size: 0.9rem;
+          padding: 8px 24px;
+      }
+
+      .assets-container {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+          padding: 8px;
+      }
+
+      .total-assets {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          background: var(--card-bg);
+          border-radius: 8px;
+          padding: 16px;
+          border: 1px solid rgba(0, 0, 0, 0.1);
+          width: 100%;
+          max-width: 300px;
+          text-align: center;
+      }
+
+      .total-assets .label {
+          font-size: 0.9rem;
+          font-weight: 400;
+          color: var(--text-secondary);
+          margin-bottom: 4px;
+      }
+
+      .total-assets .value {
+          font-size: 1.4rem;
+          font-weight: 400;
+          color: var(--text-primary);
+      }
+
+      .asset-card {
+          background: var(--card-bg);
+          border-radius: 8px;
+          padding: 12px;
+          border: 1px solid rgba(0, 0, 0, 0.1);
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          width: 100%;
+          max-width: 300px;
+      }
+
+      .asset-card .label {
+          font-size: 0.9rem;
+          font-weight: 400;
+          color: var(--text-secondary);
+      }
+
+      .asset-card .value {
+          font-size: 1rem;
+          font-weight: 400;
+          color: var(--text-primary);
+      }
+
+      #loading {
+          text-align: center;
+          color: var(--text-secondary);
+          padding: 16px;
+          opacity: 0;
+          transition: opacity 0.3s ease;
+      }
+
+      #loading.visible {
+          opacity: 1;
+      }
+
+      @media (max-width: 768px) {
+          .stock-container {
+              grid-template-columns: 1fr;
+          }
+
+          .table-container { padding: 3px; }
+
+          .record-card-container {
+              grid-template-columns: 1fr;
+          }
+
+          #accountForm, #assetForm {
+              padding: 8px;
+          }
+
+          #accountForm .form-control, #accountForm .form-select,
+          #assetForm .form-control, #assetForm .form-select {
+              font-size: 0.8rem;
+              height: 36px;
+          }
+
+          #accountForm .form-label, #assetForm .form-label {
+              font-size: 0.8rem;
+          }
+
+          #accountForm .btn-custom.form-btn.compact-btn,
+          #assetForm .btn-custom.form-btn.compact-btn {
+              font-size: 0.8rem;
+              padding: 8px 16px;
+              width: 100px;
+          }
+
+          .assets-container {
+              padding: 8px;
+              gap: 8px;
+          }
+
+          .total-assets, .asset-card {
+              max-width: 100%;
+              padding: 12px;
+          }
+
+          .total-assets .label, .asset-card .label {
+              font-size: 0.8rem;
+          }
+
+          .total-assets .value {
+              font-size: 1.2rem;
+          }
+
+          .asset-card .value {
+              font-size: 0.9rem;
+          }
+
+          header.header-container {
+              min-height: 8vh;
+              padding: 6px;
+              gap: 4px;
+          }
+
+          footer.nav-bar {
+              min-height: 8vh;
+              height: auto;
+              padding: 8px;
+          }
+
+          #pageTitle {
+              font-size: 1.4rem;
+          }
+
+          .header-dropdown {
+              width: 120px;
+              height: 36px;
+              font-size: 0.8rem;
+          }
+
+          .nav-button {
+              padding: 8px;
+          }
+
+          .nav-button span {
+              font-size: 0.8rem;
+          }
+
+          .nav-button svg {
+              width: 20px;
+              height: 20px;
+          }
+      }
+
+      /* 資產卡片樣式 */
+      .assetItem-card {
+        background: linear-gradient(145deg, #ffffff, #f0f4f8);
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        margin-bottom: 3px;
+        transition: all 0.3s ease;
+        overflow: hidden;
+        border: 1px solid #e0e6ed;
+      }
+
+      .assetItem-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+      }
+
+      .assetItem-card.active {
+        border-color: #4a89dc;
+        box-shadow: 0 0 0 2px rgba(74, 137, 220, 0.2);
+      }
+
+      .assetItem-card-inner {
+        width: 95%;
+        padding: 3px;
+      }
+
+      .assetItem-header {
+        display: flex;
+        justify-content: space-between; /* 這會將內容推向兩端 */
+        align-items: center;
+        width: 100%; /* 確保佔據整個寬度 */
+      }
+
+      .assetItem-header-left {
+        display: flex;
+        align-items: center;
+        gap: 8px; /* 圖標和文字之間的間距 */
+      }
+
+      .assetItem-type-icon {
+        font-size: 20px;
+        display: inline-block;
+        width: 30px;
+        height: 30px;
+        line-height: 30px;
+        text-align: center;
+        background-color: #f0f4f8;
+        border-radius: 50%;
+      }
+
+      .assetItem-item {
+        font-weight: 600;
+        font-size: 16px;
+        color: #333;
+      }
+
+      .assetItem-price {
+        font-weight: 700;
+        font-size: 18px;
+        color: #2c3e50;
+      }
+
+      .assetItem-details {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .assetItem-info {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+
+      .assetItem-date, .assetItem-type {
+        color: #7f8c8d;
+        font-size: 13px;
+      }
+
+      .assetItem-actions {
+        display: flex;
+        justify-content: flex-end;
+      }
+
+      .btn-record {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        background-color: #3498db;
+        color: white;
+        font-weight: 500;
+        border: none;
+        border-radius: 6px;
+        padding: 8px 16px;
+        cursor: pointer;
+        transition: background-color 0.2s;
+      }
+
+      .btn-record:hover {
+        background-color: #2980b9;
+      }
+
+      .btn-icon {
+        font-size: 14px;
+      }
+
+      .btn-text {
+        font-size: 14px;
+      }
+      /* 控制列樣式 */
+      .control-bar {
+          display: flex;
+          justify-content: center;
+          gap: 10px;
+          margin-bottom: 2px;
+      }
+
+      .control-btn {
+          padding: 8px 24px;
+          border: none;
+          border-radius: 4px;
+          background-color: var(--primary);
+          color: white;
+          cursor: pointer;
+          transition: background-color 0.3s ease;
+      }
+
+      .control-btn.active {
+          background-color: var(--secondary);
+      }
+
+      .control-btn:hover {
+          background-color: var(--info);
+      }
+
+      .data-view {
+          display: none;
+      }
+
+      .data-view.active {
+          display: block;
+      }
+    </style>
+</head>
+<body>
+    <!-- 頁面頂部標題 -->
+    <header class="header-container">
+        <h1 id="pageTitle" class="mb-0">錢包</h1>
+        <select id="accountList-title" class="form-select header-dropdown">
+            <option value="select-account">切換帳戶</option>
+        </select>
+    </header>
+
+    <main class="main-container">
+        <!-- 錢包頁面 -->
+        <section id="homePage" class="page" data-title="錢包">
+            <div class="card-container" id="homeContent">
+                <div id="assetsContainer" class="assets-container">
+                    <div class="total-assets" id="totalAssets">
+                        <span class="label">總資產</span>
+                        <span class="value">載入中...</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 管理頁面：整合帳本和持股 -->
+        <section id="managePage" class="page" data-title="查看">
+            <div class="card-container">
+                <!-- 切換卡片 -->
+                <div class="option-container" style="margin-bottom: 3px;">
+                    <div class="option-card" id="showStocksCard" data-section="stocksSection" style="background: var(--secondary); color: white;">
+                        <h3>資產</h3>
+                    </div>
+                    <div class="option-card" id="showRecordsCard" data-section="recordsSection" style="background: var(--primary); color: white;">
+                        <h3>帳本</h3>
+                    </div> 
+                </div>
+
+                <!-- 帳本內容區域 -->
+                <div class="table-container" id="recordsSection" style="display: block;">
+                    <select class="form-select mb-3" id="accountList">
+                        <option value="">顯示全部</option>
+                    </select>
+                    <div id="summaryCard" class="card-container" style="display: none;"></div>
+                    <div id="recordCardContainer" class="record-card-container"></div>
+                    <div id="loading" class="loading" style="display: none;">載入中...</div>
+                </div>
+
+                <!-- 持股內容區域 -->
+                <div id="stocksSection" class="stock-container" style="display: none;">
+                    <!-- 控制列 -->
+                    <div class="control-bar">
+                        <button id="showAssetsBtn" class="control-btn" onclick="switchDataView('assets')">現金</button>
+                        <button id="showStocksBtn" class="control-btn active" onclick="switchDataView('stocks')">證券</button>   
+                    </div>
+                    <!-- 資料顯示區域 -->
+                    <div id="stocksDataView" class="data-view" style="display: none;"></div>
+                    <div id="assetsDataView" class="data-view"></div> 
+                </div>
+            </div>
+        </section>
+
+        <!-- 發現頁面：替代原帳本導航 -->
+        <section id="sharePage" class="page" data-title="發現">
+            <div class="card-container">
+                <p class="no-account-message">這裡是發現頁面，敬請期待更多功能！</p>
+            </div>
+        </section>
+
+        <!-- 紀錄頁面 -->
+        <section id="chargePage" class="page" data-title="紀錄">
+            <div class="card-container">
+                <div class="option-container">
+                    <div class="option-card" data-form="accountForm" style="background-color: var(--success); color: white;">
+                        <h3>記帳</h3>
+                    </div>
+                    <div class="option-card" data-form="assetForm" style="background-color: var(--info); color: white;">
+                        <h3>資產</h3>
+                    </div>
+                </div>
+                <form id="accountForm" class="form-content" style="display: none;">
+                    <div class="mb-3">
+                        <label class="form-label">日期:</label>
+                        <input type="text" class="form-control" id="inputDate1" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">款項:</label>
+                        <input type="text" class="form-control" id="items1" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">帳戶:</label>
+                        <select class="form-select" id="accountList2" required>
+                            <option value="" disabled selected>選擇帳戶</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">收入&支出:</label>
+                        <select class="form-select" id="isIncome1" required>
+                            <option value="" disabled selected>選擇類型</option>
+                            <option value="收入">收入</option>
+                            <option value="支出">支出</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">類別:</label>
+                        <select class="form-select" id="property1" required>
+                            <option value="" disabled selected>選擇類別</option>
+                            <option value="食">食</option>
+                            <option value="衣">衣</option>
+                            <option value="娛樂">娛樂</option>
+                            <option value="運動">運動</option>
+                            <option value="交通">交通</option>
+                            <option value="醫療">醫療</option>
+                            <option value="3C">3C</option>
+                            <option value="教育">教育</option>
+                            <option value="小可愛">小可愛</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">金額:</label>
+                        <input type="number" class="form-control" id="amounts1" required>
+                    </div>
+                    <button type="submit" class="btn-custom form-btn" onclick="submitFinForm(event)">提交</button>
+                </form>
+                <form id="assetForm" class="form-content" style="display: none;">
+                    <div class="mb-3">
+                        <label class="form-label">日期:</label>
+                        <input type="text" class="form-control" id="inputDate2" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">資產名稱:</label>
+                        <input type="text" class="form-control" id="assetName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="stocksAccount1" class="form-label">帳戶:</label>
+                        <select class="form-select" id="accountList3" required>
+                            <option value="" disabled selected>選擇帳戶</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="category1" class="form-label">類別:</label>
+                        <select class="form-select" id="category1" name="category1" required>
+                            <option selected disabled value="">選擇類別</option>
+                            <option value="美債">美債</option>
+                            <option value="ETF">ETF</option>
+                            <option value="金融股">金融股</option>
+                            <option value="股票">股票</option>
+                            <option value="定存">定存</option>
+                            <option value="活存">活存</option>
+                            <option value="虛擬貨幣">虛擬貨幣</option>
+                            <option value="交割款">交割款</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">股數:</label>
+                        <input type="number" class="form-control" id="assetValue" placeholder="請輸入證券股數">
+                        <!-- <input type="number" class="form-control" id="assetValue"> -->
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">投資金額:</label>
+                        <input type="number" class="form-control" id="inventValue" required>
+                    </div>
+                    <button type="submit" class="btn-custom form-btn" onclick="submitStockForm(event)">提交</button>
+                </form>
+            </div>
+        </section>
+    </main>
+
+    <!-- 底部導航欄 -->
+    <footer class="nav-bar">
+        <a href="#homePage" class="nav-button active">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/>
+            </svg>
+            <span>錢包</span>
+        </a>
+        <a href="#managePage" class="nav-button">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/>
+            </svg>
+            <span>查看</span>
+        </a>
+        <a href="#sharePage" class="nav-button">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2Zm4 11h-3v3a1 1 0 0 1-2 0v-3H8a1 1 0 0 1 0-2h3V8a1 1 0 0 1 2 0v3h3a1 1 0 0 1 0 2Z"/>
+            </svg>
+            <span>發現</span>
+        </a>
+        <a href="#chargePage" class="nav-button">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M5 12h14"/><path d="M12 5v14"/>
+            </svg>
+            <span>紀錄</span>
+        </a>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" defer></script>
+    <script>
+        // 全局變量
+        var current_account = ''; // 當前選擇的帳戶
+        const initialLoad = 15;   // 初始載入記錄數量
+        let currentPage = 1;      // 當前頁碼
+        let isLoading = false;    // 是否正在載入
+        let hasMore = true;       // 是否還有更多數據
+        const API_BASE_URL = 'http://127.0.0.1:5000/api'; // Flask API 基礎 URL
+
+        // DOM緩存，方便快速訪問元素
+        const domCache = {
+            pageTitle: document.getElementById('pageTitle'),
+            tableBody: document.getElementById('recordCardContainer'),
+            accountForm: document.getElementById('accountForm'),
+            assetForm: document.getElementById('assetForm'),
+            navButtons: document.querySelectorAll('.nav-button'),
+            pages: document.querySelectorAll('.page'),
+            optionCards: document.querySelectorAll('.option-card'),
+            assetsContainer: document.getElementById('assetsContainer'),
+            showRecordsCard: document.getElementById('showRecordsCard'),
+            showStocksCard: document.getElementById('showStocksCard'),
+            recordsSection: document.getElementById('recordsSection'),
+            stocksSection: document.getElementById('stocksSection'),
+            stocksDataView: document.getElementById('stocksDataView'),
+            assetsDataView: document.getElementById('assetsDataView'),
+            showStocksBtn: document.getElementById('showStocksBtn'),
+            showAssetsBtn: document.getElementById('showAssetsBtn'),
+        };
+
+        // 頁面載入時初始化
+        // 頁面載入時初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => window.scrollTo(0, 1), 100); // 解決行動裝置狀態列問題
+            initDate();         // 初始化日期
+            loadAccounts();     // 載入帳戶列表
+            showNoAccountMessage(); // 顯示未選擇帳戶提示
+            window.addEventListener('scroll', throttle(handleScroll, 200)); // 滾動事件
+            
+            setupOptionCards(); // 設置紀錄頁面的選項卡
+            document.getElementById('accountList-title').addEventListener('change', handleHeaderAccountFilter);
+
+            updateHomePage(current_account); // 更新首頁
+            setupManagePageCards();
+
+            window.addEventListener('hashchange', handleHashChange); // 監聽 URL hash 變化
+            handleHashChange();
+
+            // 預設顯示現金資料
+            switchDataView('assets');
+
+            // 滾動時隱藏/顯示 header 和 footer
+            let lastScroll = 0;
+            const header = document.querySelector('header');
+            const footer = document.querySelector('footer');
+            window.addEventListener('scroll', () => {
+                const currentScroll = window.scrollY;
+                const scrollDelta = currentScroll - lastScroll;
+                if (scrollDelta > 5 && currentScroll > 0) {
+                    header.classList.add('hidden');
+                    footer.classList.add('hidden');
+                } else if (scrollDelta < -15 || currentScroll <= 0) {
+                    header.classList.remove('hidden');
+                    footer.classList.remove('hidden');
+                }
+                lastScroll = currentScroll <= 0 ? 0 : currentScroll;
+            });
+        });
+        // 處理URL hash變化，切換頁面
+        function setupManagePageCards() {
+            const optionContainer = document.querySelector('#managePage .option-container');
+            if (!optionContainer) {
+                console.error('找不到管理頁面的 .option-container');
+                return;
+            }
+
+            optionContainer.addEventListener('click', e => {
+                const card = e.target.closest('.option-card');
+                if (!card) return;
+
+                const sectionId = card.dataset.section;
+                if (!sectionId) {
+                    console.error('卡片缺少 data-section 屬性');
+                    return;
+                }
+
+                // 切換顯示區域
+                domCache.recordsSection.style.display = sectionId === 'recordsSection' ? 'block' : 'none';
+                domCache.stocksSection.style.display = sectionId === 'stocksSection' ? 'block' : 'none';
+
+                // 更新卡片樣式
+                domCache.showRecordsCard.style.background = sectionId === 'recordsSection' ? 'var(--primary)' : '#e2e8f0';
+                domCache.showStocksCard.style.background = sectionId === 'stocksSection' ? 'var(--secondary)' : '#e2e8f0';
+
+                // 載入對應數據
+                if (current_account != '') {
+                    if (sectionId === 'recordsSection') {
+                        currentPage = 1;
+                        hasMore = true;
+                        domCache.tableBody.innerHTML = '';
+                        fetchRecords(currentPage, initialLoad, { owner: current_account });
+                    } else if (sectionId === 'stocksSection') {
+                        switchDataView('assets'); // 預設顯示現金資料
+                    }
+                }
+            });
+        }
+
+        // 處理URL hash變化，切換頁面
+        function handleHashChange() {
+            const hash = window.location.hash.slice(1) || 'homePage';
+            const targetPage = document.getElementById(hash);
+
+            if (targetPage) {
+                domCache.pages.forEach(page => page.classList.toggle('active', page.id === hash));
+                domCache.navButtons.forEach(btn => btn.classList.toggle('active', btn.getAttribute('href') === `#${hash}`));
+                domCache.pageTitle.textContent = targetPage.dataset.title;
+                document.title = `SupWallet - ${targetPage.dataset.title}`;
+
+                if (!current_account) {
+                    showNoAccountMessage();
+                } else {
+                    switch (hash) {
+                        case 'managePage':
+                            domCache.recordsSection.style.display = 'none';
+                            domCache.stocksSection.style.display = 'block';
+                            domCache.showRecordsCard.style.background = '#e2e8f0';
+                            domCache.showStocksCard.style.background = 'var(--secondary)';
+                            switchDataView('assets'); // 預設顯示現金資料
+                            break;
+                        case 'homePage':
+                            domCache.assetsContainer.innerHTML = '';
+                            updateHomePage(current_account);
+                            break;
+                        case 'sharePage':
+                            // 發現頁面暫時無特殊處理
+                            break;
+                        case 'chargePage':
+                            break;
+                    }
+                }
+            }
+        }
+
+        // 顯示未選擇帳戶的提示訊息
+        function showNoAccountMessage() {
+            const activePageId = window.location.hash.slice(1) || 'homePage';
+            if (activePageId === 'homePage') {
+                domCache.assetsContainer.innerHTML = '<p class="no-account-message">尚未切換帳戶，請先切換</p>';
+            } else if (activePageId === 'managePage') {
+                if (domCache.recordsSection.style.display === 'block') {
+                    domCache.tableBody.innerHTML = '<p class="no-account-message">尚未切換帳戶，請先切換</p>';
+                } else {
+                    domCache.stocksSection.innerHTML = '<p class="no-account-message">尚未切換帳戶，請先切換</p>';
+                }
+            } else if (activePageId === 'sharePage') {
+                // 發現頁面保留預設訊息
+            }
+        }
+
+        // 處理頂部帳戶選擇變化
+        function handleHeaderAccountFilter(e) {
+            const selectedAccount = e.target.value;
+            if (selectedAccount === 'select-account') return;
+
+            currentPage = 1;
+            hasMore = true;
+            current_account = selectedAccount;
+
+            const activePageId = window.location.hash.slice(1) || 'homePage';
+            switch (activePageId) {
+                case 'managePage':
+                    if (domCache.recordsSection.style.display === 'block') {
+                        domCache.tableBody.innerHTML = '';
+                        fetchRecords(currentPage, initialLoad, { owner: current_account });
+                    } else {
+                        // domCache.stocksSection.innerHTML = '';
+                        renderStockCardsForAccount(current_account);
+                    }
+                    break;
+                case 'homePage':
+                    domCache.assetsContainer.innerHTML = '';
+                    updateHomePage(current_account);
+                    break;
+                case 'sharePage':
+                    // 發現頁面暫時無特殊處理
+                    break;
+            }
+        }
+
+        // 初始化日期欄位
+        function initDate() {
+            const today = new Date();
+            const defult_date = `${today.getFullYear()}/${String(today.getMonth() + 1).padStart(2, '0')}/${String(today.getDate()).padStart(2, '0')}`;
+            document.getElementById('inputDate1').value = defult_date;
+            document.getElementById('inputDate2').value = defult_date;
+        }
+
+        // 提交記帳表單
+        async function submitFinForm(e) {
+            e.preventDefault();
+            const form = domCache.accountForm;
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+            const formData = {
+                date: document.getElementById('inputDate1').value,
+                items: document.getElementById('items1').value,
+                person: document.getElementById('accountList2').value,
+                property: document.getElementById('property1').value,
+                isIncome: document.getElementById('isIncome1').value,
+                amounts: parseFloat(document.getElementById('amounts1').value)
+            };
+            try {
+                const response = await fetch(`${API_BASE_URL}/submitAccount/${formData.person}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(formData)
+                });
+                if (!response.ok) throw new Error('提交失敗');
+                domCache.accountForm.reset();
+                initDate();
+                alert('記帳提交成功！');
+            } catch (error) {
+                console.error('提交失敗:', error);
+                alert('提交失敗，請稍後再試');
+            }
+            
+        }
+
+        // 提交資產表單
+        async function submitStockForm(e) {
+            e.preventDefault();
+            const form = domCache.assetForm;
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+            const assetValueInput = document.getElementById('assetValue').value;
+            const formData = {
+                date: document.getElementById('inputDate2').value,
+                items: document.getElementById('assetName').value,
+                type: document.getElementById('category1').value,
+                owner: document.getElementById('accountList3').value,
+                quantity: assetValueInput === '' ? -1 : parseInt(assetValueInput, 10),
+                initialAmount: parseFloat(document.getElementById('inventValue').value)
+            };
+            console.log(formData);
+            try {
+                const response = await fetch(`${API_BASE_URL}/submitStock/${formData.owner}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(formData)
+                });
+                if (!response.ok) throw new Error('提交失敗');
+                domCache.assetForm.reset();
+                initDate();
+                alert('資產提交成功！');
+            } catch (error) {
+                console.error('提交失敗:', error);
+                alert('提交失敗，請稍後再試');
+            }
+        }
+
+        // 渲染帳戶選擇選項
+        function renderAccountOptions(accounts, selectId, defaultOption) {
+            const select = document.getElementById(selectId);
+            select.innerHTML = defaultOption;
+            accounts.forEach(account => {
+                const option = document.createElement('option');
+                option.value = account;
+                option.textContent = account;
+                select.appendChild(option);
+            });
+        }
+
+        // 載入帳戶列表
+        async function loadAccounts() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/accounts`);
+                if (!response.ok) throw new Error('載入帳戶失敗');
+                const accounts = await response.json();
+                renderAccountOptions(accounts, 'accountList', '<option value="NaN">顯示全部</option>');
+                renderAccountOptions(accounts, 'accountList2', '<option value="" disabled selected>選擇帳戶</option>');
+                renderAccountOptions(accounts, 'accountList3', '<option value="" disabled selected>選擇帳戶</option>');
+                renderAccountOptions(accounts, 'accountList-title', '<option value="select-account" disabled selected>切換帳戶</option>');
+            } catch (error) {
+                console.error('載入帳戶失敗:', error);
+            }
+        }
+
+        // 更新首頁資產顯示
+        async function updateHomePage(account) {
+            console.log(`更新錢包頁面為帳戶: ${account}`);
+            const assetsContainer = domCache.assetsContainer;
+
+            if (!account) {
+                assetsContainer.innerHTML = '<p class="no-account-message">尚未切換帳戶，請先切換</p>';
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/home/${account}`);
+                if (!response.ok) throw new Error('載入資產數據失敗');
+                const data = await response.json();
+                const totalAssets = data.totalAssets || 0;
+                const assetData = data.assetData || {};
+
+                assetsContainer.innerHTML = `
+                    <div class="total-assets" id="totalAssets">
+                        <span class="label">總資產</span>
+                        <span class="value">${formatNumber(totalAssets)}</span>
+                    </div>
+                `;
+
+                const fragment = document.createDocumentFragment();
+                for (const [category, value] of Object.entries(assetData)) {
+                    const card = document.createElement('div');
+                    card.className = 'asset-card';
+                    card.innerHTML = `
+                        <span class="label">${category}</span>
+                        <span class="value">${formatNumber(value)}</span>
+                    `;
+                    fragment.appendChild(card);
+                }
+                assetsContainer.appendChild(fragment);
+            } catch (error) {
+                console.error('載入資產數據失敗:', error);
+                assetsContainer.innerHTML = '<p class="no-account-message">載入失敗，請稍後重試</p>';
+            }
+        }
+
+        // 切換資料顯示的函數
+        function switchDataView(viewType) {
+            console.log(`切換資料顯示為: ${viewType}`);
+            domCache.stocksDataView.style.display = viewType === 'stocks' ? 'block' : 'none';
+            domCache.assetsDataView.style.display = viewType === 'assets' ? 'block' : 'none';
+            domCache.showStocksBtn.classList.toggle('active', viewType === 'stocks');
+            domCache.showAssetsBtn.classList.toggle('active', viewType === 'assets');
+
+            if (current_account) {
+                if (viewType === 'stocks') {
+                    renderStockCardsForAccount(current_account);
+                } else if (viewType === 'assets') {
+                    renderAssetCardsForAccount(current_account);
+                }
+            } else {
+                domCache[viewType === 'stocks' ? 'stocksDataView' : 'assetsDataView'].innerHTML = '<p class="no-account-message">尚未切換帳戶，請先切換</p>';
+            }
+        }
+
+        // 為指定帳戶渲染持股卡片
+        //修改 renderStockCardsForAccount 函數，將資料渲染到 stocksDataView
+        async function renderStockCardsForAccount(account) {
+            try {
+                const response = await fetch(`${API_BASE_URL}/stocks/${account}`);
+                if (!response.ok) throw new Error('載入股票數據失敗');
+                const data = await response.json();
+                renderStockCards(data, domCache.stocksDataView);
+            } catch (error) {
+                console.error('載入股票數據失敗:', error);
+                domCache.stocksDataView.innerHTML = '<p class="no-account-message">載入失敗，請稍後重試</p>';
+            }
+        }
+
+        // 新增 renderAssetCardsForAccount 函數，將資料渲染到 assetsDataView
+        async function renderAssetCardsForAccount(account) {
+            try {
+                const response = await fetch(`${API_BASE_URL}/assets/${account}`);
+                if (!response.ok) throw new Error('載入現金數據失敗');
+                const data = await response.json();
+                renderAssetCards(data, domCache.assetsDataView);
+            } catch (error) {
+                console.error('載入現金數據失敗:', error);
+                domCache.assetsDataView.innerHTML = '<p class="no-account-message">載入失敗，請稍後重試</p>';
+            }
+        }
+
+        // 渲染持股卡片
+        /*
+          input: stockJSON
+          id: row[0],
+          date: formattedDate,
+          item: row[2],
+          type: row[3],
+          amount: row[4],
+          initPrice: row[5],
+          currentPrice: row[6],
+          price:[7]
+        */
+        // 修改 renderStockCards 函數，將資料渲染到指定的容器
+        function renderStockCards(stockDatas, container) {
+            container.innerHTML = '';
+            const fragment = document.createDocumentFragment();
+
+            stockDatas.forEach(stockData => {
+                const change = stockData.CurrentValue - stockData.InitialAmount;
+                const changeClass = change > 0 ? 'positive' : change < 0 ? 'negative' : 'neutral';
+                const arrow = change > 0 ? '▲' : change < 0 ? '▼' : '';
+                const card = document.createElement('div');
+                card.className = 'stock-card';
+                card.innerHTML = `
+                    <div class="stock-header">
+                        <span class="stock-item">${stockData.Item}</span>
+                        <span class="stock-price ${changeClass}">${parseFloat(stockData.CurrentValue).toFixed(0)}</span>
+                    </div>
+                    <div class="stock-info">
+                        <span>${formatNumber(stockData.Quantity)}股</span>
+                        <span class="stock-change ${changeClass}">
+                            <span class="arrow">${arrow}</span>
+                            <span>${Math.abs(change).toFixed(1)}</span>
+                        </span>
+                    </div>
+                    <div class="stock-actions">
+                        <button class="btn-buy" onclick="buyStock('${stockData.Item}', event)">BUY</button>
+                        <button class="btn-sell" onclick="sellStock('${stockData.Item}', ${stockData.Quantity}, event)">SELL</button>
+                    </div>
+                `;
+                card.addEventListener('click', (e) => {
+                    if (e.target.tagName === 'BUTTON') return;
+                    card.classList.toggle('active');
+                });
+                fragment.appendChild(card);
+            });
+
+            container.appendChild(fragment);
+        }
+
+        // 渲染現金卡片
+        function renderAssetCards(assetDatas, container) {
+            console.log(assetDatas);
+            container.innerHTML = '';
+            const fragment = document.createDocumentFragment();
+
+            assetDatas.forEach(assetData => {
+                const card = document.createElement('div');
+                card.className = 'assetItem-card';
+                const assetTypeIcon = getAssetTypeIcon(assetData.Type);
+                const formattedDate = formatDateForDisplay(assetData.date);
+                card.innerHTML = `
+                    <div class="assetItem-card-inner">
+                        <div class="assetItem-header">
+                            <div class="assetItem-header-left">
+                                <span class="assetItem-type-icon">${assetTypeIcon}</span>
+                                <span class="assetItem-item">${assetData.Item}</span>
+                            </div>
+                            <span class="assetItem-price">NT$${parseInt(assetData.InitialAmount)}</span>
+                        </div>
+                        <div class="assetItem-details">
+                            <div class="assetItem-info">
+                                <span class="assetItem-date">${formattedDate}</span>
+                                <span class="assetItem-type">${assetData.Type}</span>
+                            </div>
+                            <div class="assetItem-actions">
+                                <button class="btn-record" onclick="editAccount('${assetData.id}', '${assetData.amount}', event)">
+                                    <span class="btn-icon">📝</span>
+                                    <span class="btn-text">記帳</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                fragment.appendChild(card);
+            });
+
+            container.appendChild(fragment);
+        }
+
+        function editAccount(id, amount, event) {
+            event.stopPropagation();
+            alert(`編輯功能尚未實現。ID: ${id}, Amount: ${amount}`);
+            // 在此處添加編輯邏輯，例如彈出表單並提交更新
+        }
+
+        // 根據資產類型返回合適的圖標
+        function getAssetTypeIcon(type) {
+          const icons = {
+            '活存': '💵', // 錢袋，代表可隨時提取的現金
+            '定存': '🏦', // 銀行，代表固定期限的存款
+            '虛擬貨幣': '₿'  // 比特幣符號，代表數字加密貨幣
+          };
+          
+          return icons[type] || '📦';
+        }
+
+        // 格式化日期顯示
+        function formatDateForDisplay(dateString) {
+          const date = new Date(dateString);
+          return date.toLocaleDateString('zh-TW', { year: 'numeric', month: '2-digit', day: '2-digit' });
+        }
+
+
+
+
+        // 買入股票
+        async function buyStock(name, event) {
+            event.stopPropagation();
+            const sharesToBuy = prompt(`請輸入要買入的 ${name} 股數：`, '0');
+            if (sharesToBuy === null) return;
+
+            const shares = parseInt(sharesToBuy, 10);
+            if (isNaN(shares) || shares <= 0) {
+                alert('請輸入有效的股數（大於 0 的數字）！');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/changeInventory/${current_account}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ state: 0, name, shares })
+                });
+                if (!response.ok) throw new Error('更新庫存失敗');
+                renderStockCardsForAccount(current_account);
+            } catch (error) {
+                console.error('更新庫存失敗:', error);
+                alert('更新庫存失敗，請稍後再試！');
+            }
+        }
+
+        /// 賣出股票
+        async function sellStock(name, amount, event) {
+            event.stopPropagation();
+            const sharesToSell = prompt(`請輸入要賣出的 ${name} 股數：`, '0');
+            if (sharesToSell === null) return;
+
+            const shares = parseInt(sharesToSell, 10);
+            if (isNaN(shares) || shares <= 0) {
+                alert('請輸入有效的股數（大於 0 的數字）！');
+                return;
+            }
+            if (amount - shares < 0) {
+                alert('庫存不足！');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/changeInventory/${current_account}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ state: 1, name, shares: -shares })
+                });
+                if (!response.ok) throw new Error('更新庫存失敗');
+                renderStockCardsForAccount(current_account);
+            } catch (error) {
+                console.error('更新庫存失敗:', error);
+                alert('更新庫存失敗，請稍後再試！');
+            }
+        }
+
+        // 獲取帳本記錄
+        async function fetchRecords(page, limit, filter = {}) {
+            if (isLoading || !hasMore) return;
+            isLoading = true;
+            const loadingEl = document.getElementById('loading');
+            loadingEl.classList.add('visible');
+
+            const selectedOwner = filter.owner || document.getElementById('accountList-title').value;
+
+            try {
+                const [recordsResponse, totalsResponse] = await Promise.all([
+                    fetch(`${API_BASE_URL}/getRecords/${selectedOwner}?page=${page}&limit=${limit}`),
+                    fetch(`${API_BASE_URL}/totals/${selectedOwner}`)
+                ]);
+                if (!recordsResponse.ok || !totalsResponse.ok) throw new Error('載入資料失敗');
+
+                const recordsData = await recordsResponse.json();
+                const totalsData = await totalsResponse.json();
+
+                displayRecords(recordsData.records, recordsData.hasMore);
+                displaySummary(totalsData);
+                hasMore = recordsData.hasMore;
+                isLoading = false;
+                loadingEl.classList.remove('visible');
+
+                if (window.location.hash.slice(1) === 'managePage' && hasMore) {
+                    if (recordsData.records.length > 0) {
+                        setTimeout(() => fetchRecords(currentPage, limit, { owner: selectedOwner }), 1);
+                    }
+                }
+            } catch (error) {
+                console.error('載入資料失敗:', error);
+                isLoading = false;
+                loadingEl.classList.remove('visible');
+                domCache.tableBody.innerHTML = '<p style="text-align: center; color: var(--danger);">載入失敗，請稍後重試</p>';
+            }
+        }
+
+        // 顯示帳本記錄
+        function displayRecords(records, hasmore) {
+
+            const tableBody = domCache.tableBody;
+
+            if (!records || records.length === 0) {
+                hasMore = false;
+                const summaryCard = document.getElementById('summaryCard');
+                summaryCard.style.display = 'none';
+
+                if (domCache.tableBody.querySelector('.no-data-card') === null) {
+                    const noDataCard = document.createElement('div');
+                    noDataCard.className = 'record-card no-data-card';
+                    noDataCard.innerHTML = '<p style="text-align: center; color: var(--text-secondary);">無記錄</p>';
+                    domCache.tableBody.appendChild(noDataCard);
+                }
+                return;
+            }
+
+            const fragment = document.createDocumentFragment();
+            records.forEach(record => {
+                const card = document.createElement('div');
+                card.className = `record-card ${record.type === '收入' ? 'income-card' : 'expense-card'}`;
+                const amountClass = record.type === '收入' ? 'income-amount' : 'expense-amount';
+                card.innerHTML = `
+                    <div class="record-header">
+                        <span>${record.date || ''}</span>
+                    </div>
+                    <div class="record-item">
+                        <span>${record.item || ''}</span>
+                        <span class="${amountClass}">${formatNumber(record.amount || 0)}</span>
+                    </div>
+                    <div class="record-actions">
+                        <button class="btn-custom acc-btn" onclick="editRecord('${record.id}', '${encodeURIComponent(JSON.stringify([record.date, record.item, record.amount]))}', event)">編輯</button>
+                        <button class="btn-custom acc-btn" style="background: var(--danger)" onclick="deleteRecord('${record.id}', '${current_account}', event)">刪除</button>
+                    </div>
+                `;
+                card.addEventListener('click', (e) => {
+                    if (e.target.classList.contains('acc-btn')) return;
+                    card.classList.toggle('active');
+                });
+                fragment.appendChild(card);
+            });
+
+            domCache.tableBody.appendChild(fragment);
+            currentPage++;
+
+            // 當 hasMore 為 false 時顯示「載入完成」
+            if (!hasmore && tableBody.querySelector('.load-complete-card') === null) {
+                const loadCompleteCard = document.createElement('div');
+                loadCompleteCard.className = 'record-card load-complete-card';
+                loadCompleteCard.innerHTML = '<p style="text-align: center; color: var(--text-secondary);">所有記錄已載入完成</p>';
+                tableBody.appendChild(loadCompleteCard);
+            }
+        }
+
+        // 顯示帳本總覽
+        function displaySummary(totals) {
+            const summaryCard = document.getElementById('summaryCard');
+            summaryCard.style.display = 'block';
+
+            const totalIncome = totals.totalIncome || 0;
+            const totalExpense = totals.totalExpense || 0;
+            const total = totalIncome;
+            const incomePercentage = (totalIncome - totalExpense) > 0 ? ((totalIncome - totalExpense) / total) * 100 : 0;  //Green bar
+            const expensePercentage = total > 0 ? (totalExpense / total) * 100 : 100;
+            const ownerDisplay = totals.owner === 'NaN' ? '' : `${totals.owner}`;
+            const profit = totalIncome - totalExpense;
+
+            summaryCard.innerHTML = `
+                <div class="summary-card">
+                    <div class="summary-header">
+                        <div class="summary-item income">收入: ${formatNumber(totalIncome)}</div>
+                        <div class="summary-item expense">支出: ${formatNumber(totalExpense)}</div>
+                    </div>
+                    <div class="summary-total">${ownerDisplay}</div>
+                    <div class="ratio-bar">
+                        <div class="ratio-income" style="width: ${incomePercentage}%"></div>
+                        <div class="ratio-expense" style="width: ${expensePercentage}%"></div>
+                    </div>
+                    <div class="summary-total">${profit}</div>
+                </div>
+            `;
+        }
+
+        // 處理滾動載入更多記錄
+        function handleScroll() {
+            if (isLoading || !hasMore) return;
+            if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 50) {
+                fetchRecords(currentPage, { owner: current_account || ' ' });
+            }
+        }
+
+        // 編輯記錄
+        async function editRecord(id, dataString, event) {
+            event.stopPropagation();
+            const [date, item, amount] = JSON.parse(decodeURIComponent(dataString));
+            const record = {
+                date: prompt('輸入日期', date),
+                Item: prompt('輸入項目', item),
+                Amount: prompt('輸入金額', amount)
+            };
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/record/${current_account}/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(record)
+                });
+                if (!response.ok) throw new Error('更新記錄失敗');
+                // 需要加延遲
+                currentPage = 1;
+                hasMore = true;
+                domCache.tableBody.innerHTML = '';
+                fetchRecords(currentPage, initialLoad, { owner: current_account });
+            } catch (error) {
+                console.error('更新記錄失敗:', error);
+                alert('更新記錄失敗，請稍後再試');
+            }
+        }
+
+        // 刪除記錄
+        async function deleteRecord(id, owner, event) {
+            event.stopPropagation();
+            if (confirm('確定要刪除嗎？')) {
+                try {
+                    const response = await fetch(`${API_BASE_URL}/record/${owner}/${id}`, {
+                        method: 'DELETE'
+                    });
+                    if (!response.ok) throw new Error('刪除記錄失敗');
+                    currentPage = 1;
+                    hasMore = true;
+                    domCache.tableBody.innerHTML = '';
+                    fetchRecords(currentPage, initialLoad, { owner: current_account });
+                } catch (error) {
+                    console.error('刪除記錄失敗:', error);
+                    alert('刪除記錄失敗，請稍後再試');
+                }
+            }
+        }
+
+        // 格式化數字
+        function formatNumber(number) {
+            return new Intl.NumberFormat('zh-TW').format(number);
+        }
+
+        // 設置紀錄頁面選項卡
+        function setupOptionCards() {
+            const optionContainer = document.querySelector('#chargePage .option-container');
+            if (!optionContainer) {
+                console.error('找不到 .option-container 元素');
+                return;
+            }
+
+            optionContainer.addEventListener('click', e => {
+                const card = e.target.closest('.option-card');
+                if (!card) {
+                    console.log('點擊的不是 .option-card 或其子元素');
+                    return;
+                }
+
+                const formId = card.dataset.form;
+                console.log('點擊的卡片 formId:', formId);
+
+                const accountForm = document.getElementById('accountForm');
+                const assetForm = document.getElementById('assetForm');
+
+                if (!accountForm || !assetForm) {
+                    console.error('找不到表單元素');
+                    return;
+                }
+
+                if (formId === 'accountForm') {
+                    accountForm.style.display = 'block';
+                    assetForm.style.display = 'none';
+                    console.log('顯示記帳表單');
+                } else if (formId === 'assetForm') {
+                    assetForm.style.display = 'block';
+                    accountForm.style.display = 'none';
+                    console.log('顯示資產表單');
+                } else {
+                    console.error('無效的 formId:', formId);
+                }
+            });
+        }
+
+        // 節流函數，限制事件觸發頻率
+        function throttle(func) {
+            let inThrottle;
+            return function (...args) {
+                if (!inThrottle) {
+                    func.apply(this, args);
+                    inThrottle = true;
+                    setTimeout(() => inThrottle = false);
+                }
+            };
+        }
+    </script>
+</body>
+</html>
