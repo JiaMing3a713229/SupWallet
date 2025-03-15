@@ -56,6 +56,11 @@ def get_current_price(item: str):
     return None
 
 # 獲取帳戶列表
+# 定義一個路由
+@app.route('/')
+def say_hello():
+    return "Hello SupWallet"
+
 @app.route('/api/accounts', methods=['GET'])
 def get_accounts():
     # 這裡假設有一個方法可以從 Firestore 獲取所有用戶 ID

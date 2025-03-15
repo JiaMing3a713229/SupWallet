@@ -1,9 +1,23 @@
-runtime: python39
+runtime: python312  # 或使用 python312，根據您的 Python 版本選擇
+instance_class: F1  # 免費層級的實例類型，根據需求可調整（如 F2、F4）
+
+# 指定主應用程式檔案
 entrypoint: gunicorn -b :$PORT main:app
 
+# 環境變數（可選）
 env_variables:
-  FLASK_ENV: "production"
+  PORT: 8080
 
+# 處理靜態檔案（如果有，例如 index.html）
 handlers:
-- url: /.*
-  script: auto
+  - url: /static
+    static_dir: static  # 如果您有靜態檔案，放在 static 資料夾
+
+  - url: /.*
+    script: auto  # 動態請求由 Flask 處理
+
+# 確保依賴在部署時安裝
+automatic_scaling:
+  target_cpu_utilization: 0.65
+  min_instances: 1
+  max_instances: 10
