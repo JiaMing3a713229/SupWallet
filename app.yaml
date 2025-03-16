@@ -4,10 +4,6 @@ instance_class: F1  # 免費層級的實例類型，根據需求可調整（如 
 # 指定主應用程式檔案
 entrypoint: gunicorn -b :$PORT main:app
 
-# 環境變數（可選）
-env_variables:
-  PORT: 8080
-
 # 處理靜態檔案（如果有，例如 index.html）
 handlers:
   - url: /static

@@ -6,12 +6,14 @@ import pandas as pd
 from flask import Flask, request, jsonify
 
 class SupWallet:
-    def __init__(self, db_name, serviceAccountKey):
-        self.cred = credentials.Certificate(serviceAccountKey)
+    def __init__(self, db_name):
+        self.service_account_key = "serviceAccountKey.json"  # 替換為你的服務帳戶金鑰路徑
+        self.cred = credentials.Certificate(self.service_account_key)
         if not firebase_admin._apps:  # 避免重複初始化
             firebase_admin.initialize_app(self.cred)
         self.db = firestore.client()
         self.database = db_name  # 資料庫名稱（頂層集合名稱）
+        
 
     def add_user(self, user_id, user_data=None):
         """
