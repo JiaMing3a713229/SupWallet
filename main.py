@@ -9,8 +9,7 @@ app = Flask(__name__)
 CORS(app)  # 啟用 CORS，允許所有來源訪問
 
 # 初始化 SupWallet
-service_account_key = "serviceAccountKey.json"  # 替換為你的服務帳戶金鑰路徑
-wallet = SupWallet(db_name="UserDB", serviceAccountKey=service_account_key)
+wallet = SupWallet(db_name="UserDB")
 
 def get_current_price(item: str):
     """
@@ -55,12 +54,12 @@ def get_current_price(item: str):
     print(f"找不到 {item} 的價格，可能不在 TW 或 TWO 市場")
     return None
 
-# 獲取帳戶列表
-# 定義一個路由
+
 @app.route('/')
 def say_hello():
     return "Hello SupWallet"
 
+# 獲取帳戶列表
 @app.route('/api/accounts', methods=['GET'])
 def get_accounts():
     # 這裡假設有一個方法可以從 Firestore 獲取所有用戶 ID
@@ -71,8 +70,13 @@ def get_accounts():
 @app.route('/api/home/<user_id>', methods=['GET'])
 def get_home_page_data(user_id):
     assets = wallet.getAssetAllData(user_id)
-    total_current_value = sum(asset['CurrentValue'] for asset in assets)
+    # print(assets)
+    total_current_value = 0
+    for asset in assets:
+        if(asset['CurrentValue'] != None):
+            total_current_value += asset['CurrentValue']
     return jsonify({"totalAssets": total_current_value})
+    
 
 # 獲取股票資料
 @app.route('/api/stocks/<user_id>', methods=['GET'])
@@ -250,6 +254,7 @@ def update_record(user_id, record_id):
 def delete_record(user_id, record_id):
     wallet.deleteDatafromFirestore(user_id, "expenses", record_id)
     return jsonify({"message": "Record deleted"})
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8080, debug=True)
