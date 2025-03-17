@@ -36,7 +36,7 @@ class SupWallet:
         if user_data is None:
             user_data = {
                 "created_at": datetime.now().isoformat(),
-                "name": "未命名用戶",
+                "name": user_id,
                 "email": ""
             }
         else:
@@ -50,13 +50,8 @@ class SupWallet:
 
         # 創建空的 assets 子集合（不需要初始資料）
         assets_ref = user_ref.collection("assets")
-        # 可選：添加一個空白文件以確保集合存在（Firestore 需要至少一個文件來顯示集合）
-        assets_ref.document("init").set({"initialized": True})
-
         # 創建空的 expenses 子集合
         expenses_ref = user_ref.collection("expenses")
-        # 同樣添加一個空白文件
-        expenses_ref.document("init").set({"initialized": True})
 
         return user_id
     
@@ -197,3 +192,4 @@ class SupWallet:
         print("update expense", data)
         ref.update(data)
         return True
+    

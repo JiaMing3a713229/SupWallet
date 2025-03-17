@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from SupWalletAPI import SupWallet
@@ -10,6 +11,82 @@ CORS(app)  # 啟用 CORS，允許所有來源訪問
 
 # 初始化 SupWallet
 wallet = SupWallet(db_name="UserDB")
+
+# 儲存當天的資產和開銷記錄
+def save_daily_history(user_id, date=None):
+    """
+    儲存指定日期的資產和開銷記錄到 Firestore 的 history 集合
+    Args:
+        user_id: 用戶 ID
+        date: 指定日期，默認為當天 (格式: YYYY-MM-DD)
+    """
+    # 如果未指定日期，默認為當天
+    if date is None:
+        date = datetime.now().strftime("%Y/%m/%d")
+        date_formatted = datetime.now().strftime("%Y%m%d")
+
+    # 定義需要統計的資產類型
+    target_types = ["美債", "ETF", "金融股", "股票", "定存", "活存", "虛擬貨幣"]
+    type_summary = {type_name: 0 for type_name in target_types}  # 初始化各類型總和為 0
+    
+    # 獲取資產數據
+    assets = wallet.getAssetAllData(user_id)
+    total_assets = 0
+    asset_summary = {}
+    for asset in assets:
+        current_value = asset.get("CurrentValue", 0) or 0
+        asset_type = asset.get("Type", "未知")
+        item = asset.get("Item", "未知項目")
+        total_assets += current_value
+        asset_summary[item] = asset_summary.get(item, 0) + current_value
+        # 如果資產類型在目標列表中，累加到對應類型的總和
+        if asset_type in target_types:
+            type_summary[asset_type] += current_value
+        
+    # 獲取當天開銷記錄
+    expenses = wallet.getMonthlyExpense(user_id)
+    daily_expenses = []
+    total_income = 0
+    total_expense = 0
+    
+    # 過濾出當天的記錄
+    for exp in expenses:
+        exp_date = exp.get("date", "")
+        if exp_date.startswith(date):  # 假設日期格式為 YYYY-MM-DD
+            amount = exp.get("Amount", 0)
+            transaction_type = exp.get("TransactionType", "")
+            daily_expenses.append({
+                "id": exp.get("id", ""),
+                "Item": exp.get("Item", ""),
+                "Amount": amount,
+                "TransactionType": transaction_type,
+                "Category": exp.get("Category", "")
+            })
+            if transaction_type == "收入":
+                total_income += amount
+            else:
+                total_expense += amount
+
+    # 構建歷史記錄數據
+    history_data = {
+        "date": date,
+        "totalAssets": total_assets,
+        "typeSummary": type_summary,
+        "assetSummary": asset_summary,
+        "totalIncome": total_income,
+        "totalExpense": total_expense,
+        "expenses": daily_expenses,
+        "timestamp": datetime.now().isoformat()  # 添加時間戳記
+    }
+    print("history_data", history_data)
+    # 儲存到 Firestore
+    try:
+        wallet.db.collection(wallet.database).document(user_id).collection("history").document(date_formatted).set(history_data)
+        print(f"已儲存 {user_id} 的 {date} 歷史記錄")
+    except Exception as e:
+        print(f"儲存 {user_id} 的 {date} 歷史記錄失敗: {str(e)}")
+
+    return history_data
 
 def get_current_price(item: str):
     """
@@ -96,7 +173,7 @@ def get_asset_data(user_id):
         if asset.get("Type") in ["股票", "ETF", "金融股", "美債"]:
             continue
         asset_data.append(asset)
-        print("append asset", asset)
+        # print("asset", asset)
     return jsonify(asset_data)
 
 # 更新庫存（買入或賣出）
@@ -198,7 +275,7 @@ def search_records(user_id):
 
     # 獲取當月支出記錄列表
     expenses_ref = wallet.getMonthlyExpense(user_id)  # 假設返回的是 List[dict]
-    print("expenses_ref", expenses_ref)
+    # print("expenses_ref", expenses_ref)
     # 將記錄轉換為帶有 id 的字典列表
     expenses = [
         {
@@ -220,8 +297,8 @@ def search_records(user_id):
     has_more = len(expenses) > end  # 判斷是否還有更多數據
 
     # 打印日誌以便調試
-    print(f"Page: {page}, Limit: {limit}, Total Records: {len(expenses)}, Returned: {len(records)}")
-    print("Records:", records)
+    # print(f"Page: {page}, Limit: {limit}, Total Records: {len(expenses)}, Returned: {len(records)}")
+    # print("Records:", records)
 
     # 返回 JSON 響應
     return jsonify({"records": records, "hasMore": has_more})
@@ -255,6 +332,41 @@ def delete_record(user_id, record_id):
     wallet.deleteDatafromFirestore(user_id, "expenses", record_id)
     return jsonify({"message": "Record deleted"})
 
+@app.route('/api/editAsset/<user_id>', methods=['POST'])
+def edit_record(user_id):
+    data = request.json
+    edit_id = data.get("assetId")
+    src_data = wallet.getAssets(user_id, edit_id)
+    print("src_data", src_data)
+    current_val = src_data.get("CurrentValue")
+    amount = -int(data.get("amounts")) if data.get("isIncome") == "支出" else int(data.get("amounts"))
+    edit_asset_data ={
+        "date": data["date"],
+        "InitialAmount": current_val + amount,
+        "CurrentValue": current_val + amount
+    }
+    wallet.updateAsset(user_id, edit_id, edit_asset_data)
+    return jsonify({"message": "Record deleted"})
 
+# 新增 API 端點：手動觸發儲存當天數據（用於測試）
+@app.route('/api/saveDailyHistory/<user_id>', methods=['GET'])
+def save_daily_history_api(user_id):
+    data = save_daily_history(user_id)
+    return jsonify({"message": "Daily history saved", "data": data})
+
+@app.route('/api/getDailyHistory/<user_id>', methods=['GET'])
+def get_daily_history(user_id):
+    date = datetime.now().strftime("%Y%m%d")  # 當天日期，例如 20250317
+    try:
+        doc_ref = wallet.db.collection(wallet.database).document(user_id).collection("history").document(date)
+        doc = doc_ref.get()
+        if doc.exists:
+            return jsonify(doc.to_dict())
+        else:
+            return jsonify({"message": "當天無歷史記錄", "data": {}}), 404
+    except Exception as e:
+        print(f"查詢 {user_id} 的 {date} 歷史記錄失敗: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+        
 if __name__ == "__main__":
     app.run(debug=True)

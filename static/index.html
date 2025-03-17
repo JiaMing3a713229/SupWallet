@@ -845,6 +845,17 @@
       .data-view.active {
           display: block;
       }
+      .footer-info {
+            text-align: center;
+            margin-top: 20px; /* 與上方內容的間距 */
+            margin-bottom: 20px; /* 與下方導航欄的間距 */
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        .footer-info p {
+            margin: 0; /* 移除 <p> 標籤的預設邊距 */
+        }
     </style>
 </head>
 <body>
@@ -865,6 +876,18 @@
                         <span class="label">總資產</span>
                         <span class="value">載入中...</span>
                     </div>
+                    <!-- 當天開銷表格 -->
+                    <div id="dailyExpensesContainer" class="record-card-container" style="margin-top: 10px;"></div>
+                    <!-- 資產分布圓餅圖 -->
+                    <div id="assetChartContainer" style="max-width: 400px; margin: 10px auto;">
+                        <canvas id="assetChart"></canvas>
+                    </div>
+                    <div class="footer-info" style="text-align: center; margin-top: 20px; padding-bottom: 20px;">
+                        <p style="font-size: 0.8rem; color: var(--text-secondary); margin: 0;">
+                            version: 1.0.0 | copy right: JiaMing
+                        </p>
+                    </div>
+                    
                 </div>
             </div>
         </section>
@@ -1039,7 +1062,6 @@
             <span>紀錄</span>
         </a>
     </footer>
-
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" defer></script>
     <script>
         // 全局變量
@@ -1048,8 +1070,9 @@
         let currentPage = 1;      // 當前頁碼
         let isLoading = false;    // 是否正在載入
         let hasMore = true;       // 是否還有更多數據
+        // const API_BASE_URL = 'https://web-firestore-453815.de.r.appspot.com/api'; // Flask API 基礎 URL
         const API_BASE_URL = 'http://127.0.0.1:5000/api'; // Flask API 基礎 URL
-
+        
         // DOM緩存，方便快速訪問元素
         const domCache = {
             pageTitle: document.getElementById('pageTitle'),
@@ -1106,6 +1129,52 @@
                     footer.classList.remove('hidden');
                 }
                 lastScroll = currentScroll <= 0 ? 0 : currentScroll;
+            });
+
+            // 提交記帳表單
+            document.getElementById('submitRecordBtn').addEventListener('click', async () => {
+                const form = document.getElementById('recordForm');
+                if (!form.checkValidity()) {
+                    form.reportValidity();
+                    return;
+                }
+
+                const formData = {
+                    date: document.getElementById('recordDate').value,
+                    items: document.getElementById('recordItem').value,
+                    person: current_account,
+                    property: document.getElementById('recordCategory').value, // 使用 category 作為 property
+                    isIncome: document.getElementById('recordType').value,
+                    amounts: parseFloat(document.getElementById('recordAmount').value),
+                    assetId: document.getElementById('recordAssetId').value  // 儲存資產 ID
+                };
+
+                console.log("Edit asset: ",formData);
+
+                try {
+                    const response = await fetch(`${API_BASE_URL}/editAsset/${current_account}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(formData)
+                    });
+                    if (!response.ok) throw new Error('提交失敗');
+
+                    // 關閉模態框並刷新數據
+                    bootstrap.Modal.getInstance(document.getElementById('recordModal')).hide();
+                    alert('記帳提交成功！');
+                    
+                    // 刷新帳本記錄
+                    currentPage = 1;
+                    hasMore = true;
+                    domCache.tableBody.innerHTML = '';
+                    fetchRecords(currentPage, initialLoad, { owner: current_account });
+                    
+                    // 刷新資產數據
+                    renderAssetCardsForAccount(current_account);
+                } catch (error) {
+                    console.error('提交失敗:', error);
+                    alert('提交失敗，請稍後再試');
+                }
             });
         });
         // 處理URL hash變化，切換頁面
@@ -1171,7 +1240,7 @@
                             switchDataView('assets'); // 預設顯示現金資料
                             break;
                         case 'homePage':
-                            domCache.assetsContainer.innerHTML = '';
+                            // domCache.assetsContainer.innerHTML = '';
                             updateHomePage(current_account);
                             break;
                         case 'sharePage':
@@ -1221,7 +1290,7 @@
                     }
                     break;
                 case 'homePage':
-                    domCache.assetsContainer.innerHTML = '';
+                    // domCache.assetsContainer.innerHTML = '';
                     updateHomePage(current_account);
                     break;
                 case 'sharePage':
@@ -1332,7 +1401,8 @@
             }
         }
 
-        // 更新首頁資產顯示
+        let assetChart = null;
+
         async function updateHomePage(account) {
             console.log(`更新錢包頁面為帳戶: ${account}`);
             const assetsContainer = domCache.assetsContainer;
@@ -1343,34 +1413,134 @@
             }
 
             try {
-                const response = await fetch(`${API_BASE_URL}/home/${account}`);
-                if (!response.ok) throw new Error('載入資產數據失敗');
-                const data = await response.json();
-                const totalAssets = data.totalAssets || 0;
-                const assetData = data.assetData || {};
+                const response = await fetch(`${API_BASE_URL}/getDailyHistory/${account}`, {
+                    method: 'GET',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                if (!response.ok) throw new Error('載入當天數據失敗');
+                const historyData = await response.json();
+                console.log(historyData);
 
-                assetsContainer.innerHTML = `
-                    <div class="total-assets" id="totalAssets">
-                        <span class="label">總資產</span>
-                        <span class="value">${formatNumber(totalAssets)}</span>
-                    </div>
-                `;
-
-                const fragment = document.createDocumentFragment();
-                for (const [category, value] of Object.entries(assetData)) {
-                    const card = document.createElement('div');
-                    card.className = 'asset-card';
-                    card.innerHTML = `
-                        <span class="label">${category}</span>
-                        <span class="value">${formatNumber(value)}</span>
+                // 總資產
+                const totalAssets = historyData.totalAssets || 0;
+                let totalAssetsElement = assetsContainer.querySelector('#totalAssets .value');
+                
+                // 如果元素不存在，重新生成 totalAssets 結構
+                if (!totalAssetsElement) {
+                    assetsContainer.innerHTML = `
+                        <div class="total-assets" id="totalAssets">
+                            <span class="label">總資產</span>
+                            <span class="value">NT$${formatNumber(totalAssets)}</span>
+                        </div>
+                        <div id="dailyExpensesContainer" class="record-card-container" style="margin-top: 20px;"></div>
+                        <div id="assetChartContainer" style="max-width: 400px; margin: 20px auto;">
+                            <canvas id="assetChart"></canvas>
+                        </div>
+                        <!-- 添加版本與版權信息 -->
+                        <div class="footer-info" style="text-align: center; margin-top: 20px; padding-bottom: 20px;">
+                            <p style="font-size: 0.8rem; color: var(--text-secondary); margin: 0;">
+                                version: 1.0.0 | copy right: JiaMing
+                            </p>
+                        </div>
                     `;
-                    fragment.appendChild(card);
+                } else {
+                    totalAssetsElement.textContent = `NT$${formatNumber(totalAssets)}`;
                 }
-                assetsContainer.appendChild(fragment);
+
+                // 渲染資產分布圓餅圖和當天開銷表格（取消註解以啟用）
+                renderAssetChart(historyData.typeSummary || {});
+                renderDailyExpenses(historyData.expenses || []);
             } catch (error) {
-                console.error('載入資產數據失敗:', error);
+                console.error('載入當天數據失敗:', error);
                 assetsContainer.innerHTML = '<p class="no-account-message">載入失敗，請稍後重試</p>';
             }
+        }
+        function renderAssetChart(typeSummary) {
+            let canvas = document.getElementById('assetChart');
+            const assetChartContainer = document.getElementById('assetChartContainer');
+
+            // 如果 canvas 不存在，動態創建
+            if (!canvas) {
+                if (!assetChartContainer) {
+                    console.error('找不到 #assetChartContainer，無法渲染圖表');
+                    return;
+                }
+                canvas = document.createElement('canvas');
+                canvas.id = 'assetChart';
+                assetChartContainer.appendChild(canvas);
+            }
+
+            const ctx = canvas.getContext('2d');
+            if (!ctx) {
+                console.error('無法獲取 2D 上下文，圖表渲染失敗');
+                return;
+            }
+
+            const labels = Object.keys(typeSummary).filter(key => typeSummary[key] > 0);
+            const values = labels.map(key => typeSummary[key]);
+            const backgroundColors = [
+                '#7ed321', '#ff6b6b', '#4a90e2', '#f8e71c', '#50e3c2', '#ff9f1c', '#9b59b6'
+            ].slice(0, labels.length);
+
+            if (assetChart) {
+                assetChart.destroy();
+            }
+
+            assetChart = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: values,
+                        backgroundColor: backgroundColors,
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { position: 'top', labels: { font: { size: 12 } } },
+                        tooltip: {
+                            callbacks: {
+                                label: (context) => {
+                                    const value = context.raw;
+                                    const total = context.dataset.data.reduce((sum, val) => sum + val, 0);
+                                    const percentage = ((value / total) * 100).toFixed(2);
+                                    return `${context.label}: NT$${formatNumber(value)} (${percentage}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        // 渲染當天開銷表格
+        function renderDailyExpenses(expenses) {
+            const container = document.getElementById('dailyExpensesContainer');
+            container.innerHTML = '<h3 style="text-align: center; font-size: 1.2rem; margin-bottom: 10px;">當天開銷</h3>';
+
+            if (!expenses || expenses.length === 0) {
+                container.innerHTML += '<p style="text-align: center; color: var(--text-secondary);">今日無開銷記錄</p>';
+                return;
+            }
+
+            const fragment = document.createDocumentFragment();
+            expenses.forEach(expense => {
+                const card = document.createElement('div');
+                card.className = `record-card ${expense.TransactionType === '收入' ? 'income-card' : 'expense-card'}`;
+                const amountClass = expense.TransactionType === '收入' ? 'income-amount' : 'expense-amount';
+                card.innerHTML = `
+                    <div class="record-header">
+                        <span>${expense.date || ''}</span>
+                    </div>
+                    <div class="record-item">
+                        <span>${expense.Item || ''}</span>
+                        <span class="${amountClass}">NT$${formatNumber(expense.Amount || 0)}</span>
+                    </div>
+                `;
+                fragment.appendChild(card);
+            });
+            container.appendChild(fragment);
         }
 
         // 切換資料顯示的函數
@@ -1495,7 +1665,7 @@
                                 <span class="assetItem-type">${assetData.Type}</span>
                             </div>
                             <div class="assetItem-actions">
-                                <button class="btn-record" onclick="editAccount('${assetData.id}', '${assetData.amount}', event)">
+                                <button class="btn-record" onclick="openRecordModal('${assetData.id}')">
                                     <span class="btn-icon">📝</span>
                                     <span class="btn-text">記帳</span>
                                 </button>
@@ -1507,12 +1677,6 @@
             });
 
             container.appendChild(fragment);
-        }
-
-        function editAccount(id, amount, event) {
-            event.stopPropagation();
-            alert(`編輯功能尚未實現。ID: ${id}, Amount: ${amount}`);
-            // 在此處添加編輯邏輯，例如彈出表單並提交更新
         }
 
         // 根據資產類型返回合適的圖標
@@ -1826,6 +1990,79 @@
                 }
             };
         }
+
+        function openRecordModal(asset_id) {
+            const modal = new bootstrap.Modal(document.getElementById('recordModal'));
+            console.log('打開記帳模態框，資產 ID:', asset_id);
+            // 設置預設日期
+            initDateForModal();
+            
+            // 預填其他欄位
+            document.getElementById('recordItem').value = ""; // 預填資產名稱
+            document.getElementById('recordAmount').value = ''; // 清空金額
+            document.getElementById('recordType').value = ''; // 重置類型
+            document.getElementById('recordCategory').value = ''; // 重置類別
+            document.getElementById('recordAssetId').value = asset_id; // 儲存資產 ID
+            
+            modal.show();
+        }
+        // 為模態框初始化日期
+        function initDateForModal() {
+            const today = new Date();
+            const defaultDate = `${today.getFullYear()}/${String(today.getMonth() + 1).padStart(2, '0')}/${String(today.getDate()).padStart(2, '0')}`;
+            document.getElementById('recordDate').value = defaultDate;
+        }
+
     </script>
+
+    <!-- 記帳模態框 -->
+    <div class="modal fade" id="recordModal" tabindex="-1" aria-labelledby="recordModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="recordModalLabel">記帳</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="recordForm">
+                        <div class="mb-3">
+                            <label for="recordDate" class="form-label">日期:</label>
+                            <input type="text" class="form-control" id="recordDate" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="recordItem" class="form-label">款項:</label>
+                            <input type="text" class="form-control" id="recordItem" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="recordAmount" class="form-label">金額:</label>
+                            <input type="number" class="form-control" id="recordAmount" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="recordType" class="form-label">類型:</label>
+                            <select class="form-select" id="recordType" required>
+                                <option value="" disabled selected>選擇類型</option>
+                                <option value="收入">收入</option>
+                                <option value="支出">支出</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="recordCategory" class="form-label">類別:</label>
+                            <select class="form-select" id="recordCategory" required>
+                                <option value="" disabled selected>選擇類別</option>
+                                <option value="現金">現金</option>
+                                <option value="信用交割款">信用交割款</option>
+                            </select>
+                        </div>
+                        <input type="hidden" id="recordAssetId" value="">
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">關閉</button>
+                    <button type="button" class="btn btn-custom" id="submitRecordBtn">提交</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
 </body>
 </html>
