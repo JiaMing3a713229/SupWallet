@@ -879,6 +879,9 @@
                     <!-- 當天開銷表格 -->
                     <div id="dailyExpensesContainer" class="record-card-container" style="margin-top: 10px;"></div>
                     <!-- 資產分布圓餅圖 -->
+                    <div id="expenseChartContainer" style="max-width: 400px; margin: 20px auto;">
+                        <canvas id="expenseChart"></canvas>
+                    </div>
                     <div id="assetChartContainer" style="max-width: 400px; margin: 10px auto;">
                         <canvas id="assetChart"></canvas>
                     </div>
@@ -1401,7 +1404,8 @@
             }
         }
 
-        let assetChart = null;
+        let assetChart = null; // 總資產分佈圖表的實例
+        let expenseChart = null; // 當月開銷分佈圖表的實例
 
         async function updateHomePage(account) {
             console.log(`更新錢包頁面為帳戶: ${account}`);
@@ -1413,7 +1417,7 @@
             }
 
             try {
-                const response = await fetch(`${API_BASE_URL}/getDailyHistory/${account}`, {
+                const response = await fetch(`${API_BASE_URL}/getSummaryDate/${account}`, {
                     method: 'GET',
                     headers: { 'Content-Type': 'application/json' }
                 });
@@ -1422,10 +1426,9 @@
                 console.log(historyData);
 
                 // 總資產
-                const totalAssets = historyData.totalAssets || 0;
+                const totalAssets = historyData.total_assets || 0;
                 let totalAssetsElement = assetsContainer.querySelector('#totalAssets .value');
                 
-                // 如果元素不存在，重新生成 totalAssets 結構
                 if (!totalAssetsElement) {
                     assetsContainer.innerHTML = `
                         <div class="total-assets" id="totalAssets">
@@ -1433,10 +1436,12 @@
                             <span class="value">NT$${formatNumber(totalAssets)}</span>
                         </div>
                         <div id="dailyExpensesContainer" class="record-card-container" style="margin-top: 20px;"></div>
+                        <div id="expenseChartContainer" style="max-width: 400px; margin: 20px auto;">
+                            <canvas id="expenseChart"></canvas>
+                        </div>
                         <div id="assetChartContainer" style="max-width: 400px; margin: 20px auto;">
                             <canvas id="assetChart"></canvas>
                         </div>
-                        <!-- 添加版本與版權信息 -->
                         <div class="footer-info" style="text-align: center; margin-top: 20px; padding-bottom: 20px;">
                             <p style="font-size: 0.8rem; color: var(--text-secondary); margin: 0;">
                                 version: 1.0.0 | copy right: JiaMing
@@ -1447,46 +1452,56 @@
                     totalAssetsElement.textContent = `NT$${formatNumber(totalAssets)}`;
                 }
 
-                // 渲染資產分布圓餅圖和當天開銷表格（取消註解以啟用）
-                renderAssetChart(historyData.typeSummary || {});
+                // 渲染當天開銷表格
                 renderDailyExpenses(historyData.expenses || []);
+
+                // 渲染兩個圓餅圖
+                renderDistributionOnChart('assetChart', 'assetChartContainer', historyData.asset_distribution || {}, '總資產分佈', assetChart);
+                renderDistributionOnChart('expenseChart', 'expenseChartContainer', historyData.expense_distribution || {}, '當月開銷分佈', expenseChart);
+
             } catch (error) {
                 console.error('載入當天數據失敗:', error);
                 assetsContainer.innerHTML = '<p class="no-account-message">載入失敗，請稍後重試</p>';
             }
         }
-        function renderAssetChart(typeSummary) {
-            let canvas = document.getElementById('assetChart');
-            const assetChartContainer = document.getElementById('assetChartContainer');
+
+        
+
+        function renderDistributionOnChart(canvasId, containerId, distributionData, chartTitle, chartInstance) {
+            let targetCanvas = document.getElementById(canvasId);
+            const container = document.getElementById(containerId);
 
             // 如果 canvas 不存在，動態創建
-            if (!canvas) {
-                if (!assetChartContainer) {
-                    console.error('找不到 #assetChartContainer，無法渲染圖表');
+            if (!targetCanvas) {
+                if (!container) {
+                    console.error(`找不到 #${containerId}，無法渲染圖表`);
                     return;
                 }
-                canvas = document.createElement('canvas');
-                canvas.id = 'assetChart';
-                assetChartContainer.appendChild(canvas);
+                targetCanvas = document.createElement('canvas');
+                targetCanvas.id = canvasId;
+                container.appendChild(targetCanvas);
             }
 
-            const ctx = canvas.getContext('2d');
+            const ctx = targetCanvas.getContext('2d');
             if (!ctx) {
                 console.error('無法獲取 2D 上下文，圖表渲染失敗');
                 return;
             }
 
-            const labels = Object.keys(typeSummary).filter(key => typeSummary[key] > 0);
-            const values = labels.map(key => typeSummary[key]);
+            const labels = Object.keys(distributionData).filter(key => distributionData[key] > 0);
+            const values = labels.map(key => distributionData[key]);
             const backgroundColors = [
-                '#7ed321', '#ff6b6b', '#4a90e2', '#f8e71c', '#50e3c2', '#ff9f1c', '#9b59b6'
+                '#7ed321', '#ff6b6b', '#4a90e2', '#f8e71c', '#50e3c2', '#ff9f1c', '#9b59b6',
+                '#e91e63', '#00bcd4', '#8bc34a'
             ].slice(0, labels.length);
 
-            if (assetChart) {
-                assetChart.destroy();
+            // 銷毀舊圖表實例
+            if (chartInstance) {
+                chartInstance.destroy();
             }
 
-            assetChart = new Chart(ctx, {
+            // 根據 canvasId 分配全局變數
+            const newChart = new Chart(ctx, {
                 type: 'pie',
                 data: {
                     labels: labels,
@@ -1500,6 +1515,7 @@
                     responsive: true,
                     plugins: {
                         legend: { position: 'top', labels: { font: { size: 12 } } },
+                        title: { display: true, text: chartTitle, font: { size: 16 } },
                         tooltip: {
                             callbacks: {
                                 label: (context) => {
@@ -1513,7 +1529,15 @@
                     }
                 }
             });
+
+            // 根據 canvasId 更新對應的全局變數
+            if (canvasId === 'assetChart') {
+                assetChart = newChart;
+            } else if (canvasId === 'expenseChart') {
+                expenseChart = newChart;
+            }
         }
+
         // 渲染當天開銷表格
         function renderDailyExpenses(expenses) {
             const container = document.getElementById('dailyExpensesContainer');

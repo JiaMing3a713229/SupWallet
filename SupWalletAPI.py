@@ -5,6 +5,37 @@ from datetime import datetime
 import pandas as pd
 from flask import Flask, request, jsonify
 
+class Expense:
+    def __init__(self, user_id, date, item, amount, transactionType, category):
+        self.user_id = user_id
+        self.date = date
+        self.amount = amount
+        self.transactionType = transactionType
+        self.category = category
+        self.data = {
+            "date": self.date,
+            "Item": self.item,
+            "Amount": self.amount,
+            "TransactionType": self.transactionType,
+            "Category": self.category,
+        }
+
+class Asset:
+    def __init__(self, user_id, date, item, quantity, initialAmount, type):
+        self.user_id = user_id
+        self.date = date
+        self.item = item
+        self.quantity = quantity
+        self.initialAmount = initialAmount
+        self.type = type
+        self.data = {
+            "date": self.date,
+            "Item": self.item,
+            "Quantity": self.quantity,
+            "InitialAmount": self.initialAmount,
+            "Type": self.type
+        }
+
 class SupWallet:
     def __init__(self, db_name):
         self.service_account_key = "serviceAccountKey.json"  # 替換為你的服務帳戶金鑰路徑
@@ -13,6 +44,7 @@ class SupWallet:
             firebase_admin.initialize_app(self.cred)
         self.db = firestore.client()
         self.database = db_name  # 資料庫名稱（頂層集合名稱）
+        self.optiondb = "Option"
         
 
     def add_user(self, user_id, user_data=None):
@@ -192,4 +224,63 @@ class SupWallet:
         print("update expense", data)
         ref.update(data)
         return True
-    
+
+    def getSummaryData(self, user_id, strDate):
+        # 使用直接引用來獲取集合
+        expenses_ref = self.db.collection(self.database).document(user_id).collection("expenses")
+        expenseType_ref = self.db.collection(self.optiondb).document("expense")
+        assetType_ref = self.db.collection(self.optiondb).document("asset")
+
+        expenseType = list(expenseType_ref.get().to_dict().get('options'))
+        expenseDistribution = {type_name: 0 for type_name in expenseType}  # 初始化各類型總和為 0
+
+        daily_query = expenses_ref.where("date", "==", strDate)
+        monthly_expenseList = []
+        expensesList = []
+        assetsList = []
+        total_cost = 0
+        total_income = 0
+        
+        for doc in daily_query.stream():
+            data = doc.to_dict()
+            expensesList.append(data)
+            if data.get("TransactionType") == "支出":
+                total_cost += data.get("Amount")
+            else:
+                total_income += data.get("Amount")  
+        print("expensesList", expensesList)
+        
+        monthly_expenseList = self.getMonthlyExpense(user_id)
+        for expense in monthly_expenseList:
+            tmep_price = expense.get("Amount")
+            if(expense.get("Category") in expenseType):
+                expenseDistribution[str(expense.get("Category"))] += tmep_price
+
+        # 計算資產分布
+        # 定義需要統計的資產類型
+        assetTypes = list(assetType_ref.get().to_dict().get('options'))
+        assetDistribution = {type_name: 0 for type_name in assetTypes}  # 初始化各類型總和為 0
+        
+        assetsList = self.getAssetAllData(user_id)
+        total_assets = sum([asset.get("CurrentValue") for asset in assetsList])
+
+        for asset in assetsList:
+            assetType = asset.get('Type')
+            tmep_currentValue = asset.get('CurrentValue')
+            # 如果資產類型在目標列表中，累加到對應類型的總和
+            if(assetType in assetTypes):
+                assetDistribution[assetType] += tmep_currentValue
+        
+        
+        return {
+            "expense_distribution": expenseDistribution,
+            "asset_distribution" : assetDistribution,
+            "monthly_expenses": monthly_expenseList,
+            "expenses": expensesList,
+            "assets": assetsList,
+            "total_assets": total_assets,
+            "total_cost": total_cost,
+            "total_income": total_income
+        }
+
+        

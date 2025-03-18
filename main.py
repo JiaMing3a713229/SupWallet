@@ -367,6 +367,20 @@ def get_daily_history(user_id):
     except Exception as e:
         print(f"查詢 {user_id} 的 {date} 歷史記錄失敗: {str(e)}")
         return jsonify({"error": str(e)}), 500
+
+@app.route('/api/getSummaryDate/<user_id>', methods=['GET'])
+def get_summary_data(user_id):
+    # date = datetime.now().strftime("%Y%m%d")  # 當天日期，例如 20250317
+    strDate = datetime.now().strftime("%Y/%m/%d")
+    try:
+        data = wallet.getSummaryData(user_id, strDate)
+        return data
         
+    except Exception as e:
+        print(f"查詢 {user_id} 的 {strDate} 歷史記錄失敗: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+    return "Summary data saved"
+
+
 if __name__ == "__main__":
     app.run(debug=True)
