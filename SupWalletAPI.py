@@ -253,7 +253,8 @@ class SupWallet:
         monthly_expenseList = self.getMonthlyExpense(user_id)
         for expense in monthly_expenseList:
             tmep_price = expense.get("Amount")
-            if(expense.get("Category") in expenseType):
+            print()
+            if(expense.get("Category") in expenseType and expense.get("TransactionType") == "支出"):
                 expenseDistribution[str(expense.get("Category"))] += tmep_price
 
         # 計算資產分布

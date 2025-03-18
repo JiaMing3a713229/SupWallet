@@ -1410,7 +1410,7 @@
         async function updateHomePage(account) {
             console.log(`更新錢包頁面為帳戶: ${account}`);
             const assetsContainer = domCache.assetsContainer;
-
+            
             if (!account) {
                 assetsContainer.innerHTML = '<p class="no-account-message">尚未切換帳戶，請先切換</p>';
                 return;
@@ -1428,7 +1428,8 @@
                 // 總資產
                 const totalAssets = historyData.total_assets || 0;
                 let totalAssetsElement = assetsContainer.querySelector('#totalAssets .value');
-                
+                // 計算今天開銷
+                const todayExpenses = historyData.expenses.reduce((sum, expense) => sum + (expense.Amount || 0), 0);
                 if (!totalAssetsElement) {
                     assetsContainer.innerHTML = `
                         <div class="total-assets" id="totalAssets">
@@ -1453,7 +1454,7 @@
                 }
 
                 // 渲染當天開銷表格
-                renderDailyExpenses(historyData.expenses || []);
+                renderDailyExpenses(historyData.expenses || [], todayExpenses);
 
                 // 渲染兩個圓餅圖
                 renderDistributionOnChart('assetChart', 'assetChartContainer', historyData.asset_distribution || {}, '總資產分佈', assetChart);
@@ -1539,7 +1540,34 @@
         }
 
         // 渲染當天開銷表格
-        function renderDailyExpenses(expenses) {
+        // function renderDailyExpenses(expenses) {
+        //     const container = document.getElementById('dailyExpensesContainer');
+        //     container.innerHTML = '<h3 style="text-align: center; font-size: 1.2rem; margin-bottom: 10px;">當天開銷</h3>';
+
+        //     if (!expenses || expenses.length === 0) {
+        //         container.innerHTML += '<p style="text-align: center; color: var(--text-secondary);">今日無開銷記錄</p>';
+        //         return;
+        //     }
+
+        //     const fragment = document.createDocumentFragment();
+        //     expenses.forEach(expense => {
+        //         const card = document.createElement('div');
+        //         card.className = `record-card ${expense.TransactionType === '收入' ? 'income-card' : 'expense-card'}`;
+        //         const amountClass = expense.TransactionType === '收入' ? 'income-amount' : 'expense-amount';
+        //         card.innerHTML = `
+        //             <div class="record-header">
+        //                 <span>${expense.date || ''}</span>
+        //             </div>
+        //             <div class="record-item">
+        //                 <span>${expense.Item || ''}</span>
+        //                 <span class="${amountClass}">NT$${formatNumber(expense.Amount || 0)}</span>
+        //             </div>
+        //         `;
+        //         fragment.appendChild(card);
+        //     });
+        //     container.appendChild(fragment);
+        // }
+        function renderDailyExpenses(expenses, todayExpenses) {
             const container = document.getElementById('dailyExpensesContainer');
             container.innerHTML = '<h3 style="text-align: center; font-size: 1.2rem; margin-bottom: 10px;">當天開銷</h3>';
 
@@ -1549,6 +1577,19 @@
             }
 
             const fragment = document.createDocumentFragment();
+
+            // 添加總額顯示
+            const totalCard = document.createElement('div');
+            totalCard.className = 'record-card total-card';
+            totalCard.innerHTML = `
+                <div class="record-item">
+                    <span>當天開銷總額</span>
+                    <span class="expense-amount">NT$${formatNumber(todayExpenses)}</span>
+                </div>
+            `;
+            fragment.appendChild(totalCard);
+
+            // 添加每筆開銷項目
             expenses.forEach(expense => {
                 const card = document.createElement('div');
                 card.className = `record-card ${expense.TransactionType === '收入' ? 'income-card' : 'expense-card'}`;
@@ -1564,6 +1605,7 @@
                 `;
                 fragment.appendChild(card);
             });
+
             container.appendChild(fragment);
         }
 
