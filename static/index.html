@@ -856,6 +856,230 @@
         .footer-info p {
             margin: 0; /* 移除 <p> 標籤的預設邊距 */
         }
+        
+
+        /* CSS for SharePage */
+        /* 貼文輸入區域 */
+        .post-input-container {
+            background: var(--card-bg);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 16px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .post-input-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            background: #e0e0e0;
+            border-radius: 50%;
+            background-image: url('https://storage.googleapis.com/supwallet_postdb/defult_avater.jpeg'); /* 替換為實際頭像 */
+            background-size: cover;
+        }
+
+        .post-input {
+            flex: 1;
+            padding: 10px 16px;
+            border: none;
+            border-radius: 20px;
+            background: #f0f2f5;
+            font-size: 1rem;
+            color: var(--text-primary);
+            cursor: pointer;
+        }
+
+        .post-input:focus {
+            outline: none;
+            background: #e8ecef;
+        }
+
+        
+        
+        .btn-close {
+            background: none;
+            border: none;
+            font-size: 1.2rem;
+            cursor: pointer;
+            color: var(--text-secondary);
+        }
+
+        .post-form-user {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .user-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .user-name {
+            font-size: 1rem;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .privacy-select {
+            font-size: 0.8rem;
+            padding: 2px 8px;
+            width: auto;
+            background: #f0f2f5;
+            border: none;
+            border-radius: 4px;
+        }
+
+        .post-textarea {
+            border: none;
+            resize: none;
+            font-size: 1.2rem;
+            padding: 8px 0;
+            background: transparent;
+        }
+        .post-textarea:focus {
+            outline: none;
+            box-shadow: none;
+        }
+
+        .image-upload-container {
+            position: relative;
+        }
+
+        .image-preview {
+            margin-top: 8px;
+            max-height: 200px;
+            overflow: hidden;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .image-preview img {
+            width: 100%;
+            height: auto;
+            object-fit: cover;
+        }
+
+        /* 貼文卡片 */
+        .posts-container {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .post-card {
+            background: var(--card-bg);
+            border-radius: 8px;
+            padding: 16px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .post-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .post-user {
+            font-size: 1rem;
+            font-weight: 500;
+            color: var(--primary);
+        }
+
+        .post-time {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        .post-list {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .post-content {
+            font-size: 1rem;
+            line-height: 1.5;
+            margin-bottom: 12px;
+        }
+
+        .post-image {
+            width: 100%;
+            max-height: 400px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-bottom: 12px;
+        }
+
+        .post-reactions {
+            display: flex;
+            gap: 8px;
+            border-top: 1px solid #e0e0e0;
+            padding-top: 8px;
+        }
+
+        .reaction-btn {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            background: none;
+            border: none;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            padding: 4px 8px;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+
+        .reaction-btn:hover {
+            background: #f0f2f5;
+            transform: scale(1.1);
+        }
+
+        .reaction-count {
+            font-size: 0.8rem;
+        }
+
+        @media (max-width: 768px) {
+            .modal-content {
+                width: 95%;
+            }
+
+            .post-input {
+                font-size: 0.9rem;
+                padding: 8px 12px;
+            }
+
+            .post-textarea {
+                font-size: 1rem;
+            }
+
+            .post-card {
+                padding: 12px;
+            }
+
+            .post-user {
+                font-size: 0.9rem;
+            }
+
+            .post-content {
+                font-size: 0.9rem;
+            }
+
+            .reaction-btn {
+                font-size: 0.8rem;
+                padding: 4px 6px;
+            }
+        }
+
     </style>
 </head>
 <body>
@@ -932,10 +1156,53 @@
             </div>
         </section>
 
-        <!-- 發現頁面：替代原帳本導航 -->
+        <!-- 發現頁面：貼文系統 -->
         <section id="sharePage" class="page" data-title="發現">
             <div class="card-container">
-                <p class="no-account-message">這裡是發現頁面，敬請期待更多功能！</p>
+                <!-- 貼文輸入區域 -->
+                <div class="post-input-container">
+                    <div class="post-input-header">
+                        <div class="user-avatar"></div>
+                        <input type="text" id="quickPostInput" class="post-input" placeholder="有什麼新鮮事？" onclick="openPostModal()">
+                    </div>
+                </div>
+
+                <!-- 貼文列表 -->
+                <div id="postsContainer" class="posts-container">
+                    <p id="loadingPosts" class="no-account-message">載入貼文中...</p>
+                </div>
+
+                <!-- 貼文表單模態框 -->
+                <div id="postModal" class="modal" style="display: none;">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3>新增貼文</h3>
+                            <button type="button" id="closePostFormBtn" class="btn-close">×</button>
+                        </div>
+                        <form id="postForm" class="form-content" enctype="multipart/form-data">
+                            <div class="post-form-user">
+                                <div class="user-avatar"></div>
+                                <div class="user-info">
+                                    <select class="form-select privacy-select" id="postList" name="list" required>
+                                        <option value="public">公開</option>
+                                        <option value="private">私人</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <textarea class="form-control post-textarea" id="postContent" name="content" rows="3" required placeholder="有什麼新鮮事？"></textarea>
+                            </div>
+                            <div class="mb-3 image-upload-container">
+                                <label class="form-label">圖片 (選填):</label>
+                                <input type="file" class="form-control" id="postImage" name="image" accept="image/*">
+                                <div id="imagePreview" class="image-preview"></div>
+                            </div>
+                            <div class="modal-actions">
+                                <button type="submit" class="btn-custom form-btn">發布</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
             </div>
         </section>
 
@@ -1073,9 +1340,15 @@
         let currentPage = 1;      // 當前頁碼
         let isLoading = false;    // 是否正在載入
         let hasMore = true;       // 是否還有更多數據
-        // const API_BASE_URL = 'https://web-firestore-453815.de.r.appspot.com/api'; // Flask API 基礎 URL
-        const API_BASE_URL = 'http://127.0.0.1:5000/api'; // Flask API 基礎 URL
+        const API_BASE_URL = 'https://web-firestore-453815.de.r.appspot.com/api'; // Flask API 基礎 URL
+        const POST_API_BASE_URL = 'http://127.0.0.1:5000/api'; // Flask API 基礎 URL
         
+        // DOM 緩存
+        const postsContainer = document.getElementById('postsContainer');
+        const postForm = document.getElementById('postForm');
+        const postModal = document.getElementById('postModal');
+        const closePostFormBtn = document.getElementById('closePostFormBtn');
+
         // DOM緩存，方便快速訪問元素
         const domCache = {
             pageTitle: document.getElementById('pageTitle'),
@@ -1096,7 +1369,7 @@
             showAssetsBtn: document.getElementById('showAssetsBtn'),
         };
 
-        // 頁面載入時初始化
+        
         // 頁面載入時初始化
         document.addEventListener('DOMContentLoaded', () => {
             setTimeout(() => window.scrollTo(0, 1), 100); // 解決行動裝置狀態列問題
@@ -1179,7 +1452,57 @@
                     alert('提交失敗，請稍後再試');
                 }
             });
+
+
+            //update
+            loadPosts(current_account);
+            postForm.addEventListener('submit', handlePostSubmit);
+            closePostFormBtn.addEventListener('click', () => {
+                postModal.style.display = 'none';
+                postForm.reset();
+                imagePreview.innerHTML = '';
+                imagePreview.style.display = 'none';
+            });
+            // 點擊彈出層外部關閉
+            postModal.addEventListener('click', (e) => {
+                if (e.target === postModal) {
+                    postModal.style.display = 'none';
+                    postForm.reset();
+                    imagePreview.innerHTML = '';
+                    imagePreview.style.display = 'none';
+                }
+            });
+
+            // 圖片預覽功能
+            const postImageInput = document.getElementById('postImage');
+            const imagePreview = document.getElementById('imagePreview');
+            postImageInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        imagePreview.innerHTML = `<img src="${event.target.result}" alt="圖片預覽">`;
+                        imagePreview.style.display = 'block';
+                    };
+                    reader.readAsDataURL(file);
+                } else {
+                    imagePreview.innerHTML = '';
+                    imagePreview.style.display = 'none';
+                }
+            });
+
+            // 清除圖片預覽
+            postForm.addEventListener('reset', () => {
+                imagePreview.innerHTML = '';
+                imagePreview.style.display = 'none';
+            });
+            
+
         });
+        // 快速貼文功能
+        function openPostModal() {
+            postModal.style.display = 'flex';
+        }
         // 處理URL hash變化，切換頁面
         function setupManagePageCards() {
             const optionContainer = document.querySelector('#managePage .option-container');
@@ -1297,7 +1620,7 @@
                     updateHomePage(current_account);
                     break;
                 case 'sharePage':
-                    // 發現頁面暫時無特殊處理
+                    loadPosts(current_account);
                     break;
             }
         }
@@ -1539,34 +1862,6 @@
             }
         }
 
-        // 渲染當天開銷表格
-        // function renderDailyExpenses(expenses) {
-        //     const container = document.getElementById('dailyExpensesContainer');
-        //     container.innerHTML = '<h3 style="text-align: center; font-size: 1.2rem; margin-bottom: 10px;">當天開銷</h3>';
-
-        //     if (!expenses || expenses.length === 0) {
-        //         container.innerHTML += '<p style="text-align: center; color: var(--text-secondary);">今日無開銷記錄</p>';
-        //         return;
-        //     }
-
-        //     const fragment = document.createDocumentFragment();
-        //     expenses.forEach(expense => {
-        //         const card = document.createElement('div');
-        //         card.className = `record-card ${expense.TransactionType === '收入' ? 'income-card' : 'expense-card'}`;
-        //         const amountClass = expense.TransactionType === '收入' ? 'income-amount' : 'expense-amount';
-        //         card.innerHTML = `
-        //             <div class="record-header">
-        //                 <span>${expense.date || ''}</span>
-        //             </div>
-        //             <div class="record-item">
-        //                 <span>${expense.Item || ''}</span>
-        //                 <span class="${amountClass}">NT$${formatNumber(expense.Amount || 0)}</span>
-        //             </div>
-        //         `;
-        //         fragment.appendChild(card);
-        //     });
-        //     container.appendChild(fragment);
-        // }
         function renderDailyExpenses(expenses, todayExpenses) {
             const container = document.getElementById('dailyExpensesContainer');
             container.innerHTML = '<h3 style="text-align: center; font-size: 1.2rem; margin-bottom: 10px;">當天開銷</h3>';
@@ -2077,6 +2372,132 @@
             const today = new Date();
             const defaultDate = `${today.getFullYear()}/${String(today.getMonth() + 1).padStart(2, '0')}/${String(today.getDate()).padStart(2, '0')}`;
             document.getElementById('recordDate').value = defaultDate;
+        }
+
+
+        //SharePage JavaScripts
+        // 提交貼文
+        async function handlePostSubmit(e) {
+            e.preventDefault();
+            const formData = new FormData(postForm);
+            // 手動添加 userId 到 formData
+            formData.append('userId', current_account); // 使用 append 添加新鍵值對
+            // 輸出所有表單資料
+            console.log('提交的表單資料：');
+            for (const [key, value] of formData.entries()) {
+                if (value instanceof File) {
+                    console.log(`${key}: 文件名=${value.name}, 大小=${value.size} bytes, 類型=${value.type}`);
+                } else {
+                    console.log(`${key}: ${value}`);
+                }
+            }
+            try {
+                const response = await fetch(`${POST_API_BASE_URL}/posts`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.error || '提交失敗');
+
+                postForm.reset();
+                postModal.style.display = 'none';
+                loadPosts(current_account);
+            } catch (error) {
+                console.error('提交貼文失敗:', error);
+                alert('發布失敗，請稍後再試！');
+            }
+        }
+
+        async function loadPosts(account) {
+            console.log("account", account);
+            if (!account) {
+                postsContainer.innerHTML = '<p class="no-account-message">請提供使用者帳戶</p>';
+                return;
+            }
+
+            postsContainer.innerHTML = '<p id="loadingPosts" class="no-account-message">載入貼文中...</p>';
+            console.log('正在載入貼文，帳戶:', account);
+
+            try {
+                const response = await fetch(`${POST_API_BASE_URL}/posts/${account}`);
+                if (!response.ok) {
+                    throw new Error(`HTTP 錯誤: ${response.status}`);
+                }
+                const posts = await response.json();
+
+                postsContainer.innerHTML = '';
+                if (!posts.length) {
+                    postsContainer.innerHTML = '<p class="no-account-message">尚無貼文</p>';
+                    return;
+                }
+
+                const fragment = document.createDocumentFragment();
+                posts.forEach(post => {
+                    const card = createPostCard(post, post.id);
+                    fragment.appendChild(card);
+                });
+                postsContainer.appendChild(fragment);
+            } catch (error) {
+                console.error('載入貼文失敗:', error);
+                postsContainer.innerHTML = '<p class="no-account-message">載入失敗，請稍後重試</p>';
+            }
+        }
+
+        // 創建貼文卡片
+        function createPostCard(post, postId) {
+            const card = document.createElement('div');
+            card.className = 'post-card';
+            const time = post.timestamp ? new Date(post.timestamp).toLocaleString('zh-TW') : '剛剛';
+            console.log(post);
+            card.innerHTML = `
+                <div class="post-header">
+                    <div class="user-avatar"></div>
+                    <div>
+                        <span class="post-user">${current_account}</span>
+                        <div class="post-time">${time}</div>
+                    </div>
+                </div>
+                <div class="post-list">${post.list === 'public' ? '公開' : '私人'}</div>
+                <div class="post-content">${post.content}</div>
+                ${post.imageUrl ? `<img src="${post.imageUrl}" class="post-image" alt="貼文圖片">` : ''}
+                <div class="post-reactions">
+                    <button class="reaction-btn" data-reaction="like" data-post-id="${postId}">
+                        👍 <span class="reaction-count">${post.reactions.like}</span>
+                    </button>
+                    <button class="reaction-btn" data-reaction="love" data-post-id="${postId}">
+                        ❤️ <span class="reaction-count">${post.reactions.love}</span>
+                    </button>
+                    <button class="reaction-btn" data-reaction="laugh" data-post-id="${postId}">
+                        😂 <span class="reaction-count">${post.reactions.laugh}</span>
+                    </button>
+                </div>
+            `;
+
+            card.querySelectorAll('.reaction-btn').forEach(btn => {
+                btn.addEventListener('click', () => handleReaction(current_account, postId, btn.dataset.reaction));
+            });
+
+            return card;
+        }
+
+        // 處理表情反應
+        async function handleReaction(account, postId, reactionType) {
+            try {
+                const response = await fetch(`${POST_API_BASE_URL}/posts/${account}/${postId}/react`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ reaction: reactionType })
+                });
+
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.error || '反應更新失敗');
+
+                loadPosts(current_account);
+            } catch (error) {
+                console.error('更新表情失敗:', error);
+                alert('操作失敗，請稍後再試！');
+            }
         }
 
     </script>
