@@ -336,14 +336,15 @@ def delete_record(user_id, record_id):
 def edit_record(user_id):
     data = request.json
     edit_id = data.get("assetId")
-    src_data = wallet.getAssets(user_id, edit_id)
-    print("src_data", src_data)
-    current_val = src_data.get("CurrentValue")
-    amount = -int(data.get("amounts")) if data.get("isIncome") == "支出" else int(data.get("amounts"))
+    amount = data.get("amounts")
+    # src_data = wallet.getAssets(user_id, edit_id)
+    # print("src_data", src_data)
+    # current_val = src_data.get("CurrentValue")
+    # amount = -int(data.get("amounts")) if data.get("isIncome") == "支出" else int(data.get("amounts"))
     edit_asset_data ={
         "date": data["date"],
-        "InitialAmount": current_val + amount,
-        "CurrentValue": current_val + amount
+        "InitialAmount": amount,
+        "CurrentValue": amount
     }
     wallet.updateAsset(user_id, edit_id, edit_asset_data)
     return jsonify({"message": "Record deleted"})

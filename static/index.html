@@ -6,7 +6,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="mobile-web-app-capable" content="yes">
-    <title>CMXie 財經管家</title>
+    <title>Gochy 記賬網</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -1079,7 +1079,126 @@
                 padding: 4px 6px;
             }
         }
+        #imageZoomModal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
 
+        #imageZoomModal .modal-content {
+            position: relative;
+        }
+
+        #zoomedImage {
+            cursor: pointer;
+        }
+        /* 貼文模態框樣式 */
+        #postModal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center; /* 水平置中 */
+            align-items: center; /* 垂直置中 */
+            z-index: 2000;
+        }
+        /* 控制貼文模態框內容區域 */
+        #postModal .modal-content {
+            max-width: 500px; /* 限制最大寬度 */
+            width: 90%; /* 適應行動裝置 */
+            max-height: 80vh; /* 限制最大高度 */
+            overflow-y: auto; /* 內容過長時可滾動 */
+            background: var(--card-bg);
+            border-radius: 8px;
+            padding: 16px;
+            margin: 0 auto; /* 確保水平置中 */
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        /* 控制記帳模態框大小 */
+        #recordModal .modal-dialog {
+            max-width: 500px; /* 限制最大寬度 */
+            width: 90%; /* 適應行動裝置 */
+        }
+        /* 行動裝置上的樣式 */
+        @media (max-width: 768px) {
+            #postModal .modal-content {
+                max-width: 95%;
+                max-height: 70vh;
+                padding: 12px;
+            }
+        }
+
+        #recordModal .modal-content {
+            max-height: 80vh; /* 限制最大高度 */
+            overflow-y: auto; /* 內容過長時可滾動 */
+        }
+
+        /* 登入模態框樣式 */
+        #loginModal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center; /* 水平置中 */
+            align-items: center; /* 垂直置中 */
+            z-index: 2000;
+        }
+
+        /* 控制登入模態框內容區域 */
+        #loginModal .login-modal-content {
+            max-width: 400px; /* 限制最大寬度 */
+            width: 90%; /* 適應行動裝置 */
+            max-height: 80vh; /* 限制最大高度 */
+            overflow-y: auto; /* 內容過長時可滾動 */
+            background: var(--card-bg);
+            border-radius: 8px;
+            padding: 16px;
+            margin: 0 auto; /* 確保水平置中 */
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        /* 模態框頁腳連結 */
+        .modal-footer-links {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 16px;
+            font-size: 0.9rem;
+        }
+
+        .footer-link {
+            color: var(--primary);
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .footer-link:hover {
+            color: var(--secondary);
+            text-decoration: underline;
+        }
+
+        /* 行動裝置上的樣式 */
+        @media (max-width: 768px) {
+            #loginModal .login-modal-content {
+                max-width: 95%;
+                max-height: 70vh;
+                padding: 12px;
+            }
+
+            .modal-footer-links {
+                font-size: 0.8rem;
+            }
+        }
     </style>
 </head>
 <body>
@@ -1303,6 +1422,7 @@
                 </form>
             </div>
         </section>
+
     </main>
 
     <!-- 底部導航欄 -->
@@ -1335,13 +1455,15 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" defer></script>
     <script>
         // 全局變量
+        const version = 'v1.0.3';
         var current_account = ''; // 當前選擇的帳戶
         const initialLoad = 15;   // 初始載入記錄數量
         let currentPage = 1;      // 當前頁碼
         let isLoading = false;    // 是否正在載入
         let hasMore = true;       // 是否還有更多數據
-        const API_BASE_URL = 'https://web-firestore-453815.de.r.appspot.com/api'; // Flask API 基礎 URL
-        const POST_API_BASE_URL = 'http://127.0.0.1:5000/api'; // Flask API 基礎 URL
+        // const API_BASE_URL = 'https://web-firestore-453815.de.r.appspot.com/api'; // Flask API 基礎 URL
+        const API_BASE_URL = 'http://127.0.0.1:5000/api'
+        const POST_API_BASE_URL = 'https://postflask-dot-web-firestore-453815.de.r.appspot.com/api'; // 處理貼文功能伺服器
         
         // DOM 緩存
         const postsContainer = document.getElementById('postsContainer');
@@ -1373,6 +1495,11 @@
         // 頁面載入時初始化
         document.addEventListener('DOMContentLoaded', () => {
             setTimeout(() => window.scrollTo(0, 1), 100); // 解決行動裝置狀態列問題
+
+            // 初始化登入模態框
+            initLoginModal();
+
+
             initDate();         // 初始化日期
             loadAccounts();     // 載入帳戶列表
             showNoAccountMessage(); // 顯示未選擇帳戶提示
@@ -1417,10 +1544,10 @@
 
                 const formData = {
                     date: document.getElementById('recordDate').value,
-                    items: document.getElementById('recordItem').value,
+                    // items: document.getElementById('recordItem').value,
                     person: current_account,
-                    property: document.getElementById('recordCategory').value, // 使用 category 作為 property
-                    isIncome: document.getElementById('recordType').value,
+                    // property: document.getElementById('recordCategory').value, // 使用 category 作為 property
+                    // isIncome: document.getElementById('recordType').value,
                     amounts: parseFloat(document.getElementById('recordAmount').value),
                     assetId: document.getElementById('recordAssetId').value  // 儲存資產 ID
                 };
@@ -1543,6 +1670,65 @@
             });
         }
 
+        // 初始化登入模態框
+        async function initLoginModal() {
+            // 顯示登入模態框
+            loginModal.style.display = 'flex';
+
+            // 載入帳戶列表
+            try {
+                const response = await fetch(`${API_BASE_URL}/accounts`);
+                if (!response.ok) throw new Error('載入帳戶失敗');
+                const accounts = await response.json();
+                renderAccountOptions(accounts, 'loginAccountList', '<option value="" disabled selected>請選擇帳戶</option>');
+            } catch (error) {
+                console.error('載入帳戶失敗:', error);
+                loginAccountList.innerHTML = '<option value="" disabled selected>載入失敗，請重試</option>';
+            }
+
+            // 處理登入表單提交
+            loginForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const selectedAccount = loginAccountList.value;
+                if (!selectedAccount) {
+                    alert('請選擇一個帳戶！');
+                    return;
+                }
+
+                // 設置當前帳戶並關閉模態框
+                current_account = selectedAccount;
+                loginModal.style.display = 'none';
+
+                // 刷新頁面數據
+                const activePageId = window.location.hash.slice(1) || 'homePage';
+                switch (activePageId) {
+                    case 'managePage':
+                        if (domCache.recordsSection.style.display === 'block') {
+                            domCache.tableBody.innerHTML = '';
+                            fetchRecords(currentPage, initialLoad, { owner: current_account });
+                        } else {
+                            renderStockCardsForAccount(current_account);
+                        }
+                        break;
+                    case 'homePage':
+                        updateHomePage(current_account);
+                        break;
+                    case 'sharePage':
+                        loadPosts(current_account);
+                        break;
+                }
+
+                // 更新頂部帳戶選擇
+                document.getElementById('accountList-title').value = current_account;
+            });
+
+            // 點擊模態框外部不關閉（強制用戶選擇帳戶）
+            loginModal.addEventListener('click', (e) => {
+                if (e.target === loginModal) {
+                    alert('請選擇一個帳戶進行登入！');
+                }
+            });
+        }
         // 處理URL hash變化，切換頁面
         function handleHashChange() {
             const hash = window.location.hash.slice(1) || 'homePage';
@@ -1570,7 +1756,7 @@
                             updateHomePage(current_account);
                             break;
                         case 'sharePage':
-                            // 發現頁面暫時無特殊處理
+                            loadPosts(current_account);
                             break;
                         case 'chargePage':
                             break;
@@ -1683,7 +1869,7 @@
                 quantity: assetValueInput === '' ? -1 : parseInt(assetValueInput, 10),
                 initialAmount: parseFloat(document.getElementById('inventValue').value)
             };
-            console.log(formData);
+            // console.log(formData);
             try {
                 const response = await fetch(`${API_BASE_URL}/submitStock/${formData.owner}`, {
                     method: 'POST',
@@ -1731,7 +1917,7 @@
         let expenseChart = null; // 當月開銷分佈圖表的實例
 
         async function updateHomePage(account) {
-            console.log(`更新錢包頁面為帳戶: ${account}`);
+            // console.log(`更新錢包頁面為帳戶: ${account}`);
             const assetsContainer = domCache.assetsContainer;
             
             if (!account) {
@@ -1746,7 +1932,7 @@
                 });
                 if (!response.ok) throw new Error('載入當天數據失敗');
                 const historyData = await response.json();
-                console.log(historyData);
+                // console.log(historyData);
 
                 // 總資產
                 const totalAssets = historyData.total_assets || 0;
@@ -1768,7 +1954,7 @@
                         </div>
                         <div class="footer-info" style="text-align: center; margin-top: 20px; padding-bottom: 20px;">
                             <p style="font-size: 0.8rem; color: var(--text-secondary); margin: 0;">
-                                version: 1.0.0 | copy right: JiaMing
+                                version: ${version} | copy right: JiaMing
                             </p>
                         </div>
                     `;
@@ -1906,7 +2092,7 @@
 
         // 切換資料顯示的函數
         function switchDataView(viewType) {
-            console.log(`切換資料顯示為: ${viewType}`);
+            // console.log(`切換資料顯示為: ${viewType}`);
             domCache.stocksDataView.style.display = viewType === 'stocks' ? 'block' : 'none';
             domCache.assetsDataView.style.display = viewType === 'assets' ? 'block' : 'none';
             domCache.showStocksBtn.classList.toggle('active', viewType === 'stocks');
@@ -2002,39 +2188,42 @@
 
         // 渲染現金卡片
         function renderAssetCards(assetDatas, container) {
-            console.log(assetDatas);
+            // console.log(assetDatas);
             container.innerHTML = '';
             const fragment = document.createDocumentFragment();
 
             assetDatas.forEach(assetData => {
-                const card = document.createElement('div');
-                card.className = 'assetItem-card';
-                const assetTypeIcon = getAssetTypeIcon(assetData.Type);
-                const formattedDate = formatDateForDisplay(assetData.date);
-                card.innerHTML = `
-                    <div class="assetItem-card-inner">
-                        <div class="assetItem-header">
-                            <div class="assetItem-header-left">
-                                <span class="assetItem-type-icon">${assetTypeIcon}</span>
-                                <span class="assetItem-item">${assetData.Item}</span>
+                if(assetData.InitialAmount > 0){
+                    const card = document.createElement('div');
+                    card.className = 'assetItem-card';
+                    const assetTypeIcon = getAssetTypeIcon(assetData.Type);
+                    const formattedDate = formatDateForDisplay(assetData.date);
+                    card.innerHTML = `
+                        <div class="assetItem-card-inner">
+                            <div class="assetItem-header">
+                                <div class="assetItem-header-left">
+                                    <span class="assetItem-type-icon">${assetTypeIcon}</span>
+                                    <span class="assetItem-item">${assetData.Item}</span>
+                                </div>
+                                <span class="assetItem-price">NT$${parseInt(assetData.InitialAmount)}</span>
                             </div>
-                            <span class="assetItem-price">NT$${parseInt(assetData.InitialAmount)}</span>
+                            <div class="assetItem-details">
+                                <div class="assetItem-info">
+                                    <span class="assetItem-date">${formattedDate}</span>
+                                    <span class="assetItem-type">${assetData.Type}</span>
+                                </div>
+                                <div class="assetItem-actions">
+                                    <button class="btn-record" onclick="openRecordModal('${assetData.id}')">
+                                        <span class="btn-icon">📝</span>
+                                        <span class="btn-text">編輯</span>
+                                    </button>
+                                </div>
+                            </div>
                         </div>
-                        <div class="assetItem-details">
-                            <div class="assetItem-info">
-                                <span class="assetItem-date">${formattedDate}</span>
-                                <span class="assetItem-type">${assetData.Type}</span>
-                            </div>
-                            <div class="assetItem-actions">
-                                <button class="btn-record" onclick="openRecordModal('${assetData.id}')">
-                                    <span class="btn-icon">📝</span>
-                                    <span class="btn-text">記帳</span>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                `;
-                fragment.appendChild(card);
+                    `;
+                    fragment.appendChild(card);
+                }
+                
             });
 
             container.appendChild(fragment);
@@ -2316,7 +2505,7 @@
                 }
 
                 const formId = card.dataset.form;
-                console.log('點擊的卡片 formId:', formId);
+                // console.log('點擊的卡片 formId:', formId);
 
                 const accountForm = document.getElementById('accountForm');
                 const assetForm = document.getElementById('assetForm');
@@ -2354,15 +2543,15 @@
 
         function openRecordModal(asset_id) {
             const modal = new bootstrap.Modal(document.getElementById('recordModal'));
-            console.log('打開記帳模態框，資產 ID:', asset_id);
+            // console.log('打開記帳模態框，資產 ID:', asset_id);
             // 設置預設日期
             initDateForModal();
             
             // 預填其他欄位
-            document.getElementById('recordItem').value = ""; // 預填資產名稱
+            // document.getElementById('recordItem').value = ""; // 預填資產名稱
             document.getElementById('recordAmount').value = ''; // 清空金額
-            document.getElementById('recordType').value = ''; // 重置類型
-            document.getElementById('recordCategory').value = ''; // 重置類別
+            // document.getElementById('recordType').value = ''; // 重置類型
+            // document.getElementById('recordCategory').value = ''; // 重置類別
             document.getElementById('recordAssetId').value = asset_id; // 儲存資產 ID
             
             modal.show();
@@ -2383,12 +2572,12 @@
             // 手動添加 userId 到 formData
             formData.append('userId', current_account); // 使用 append 添加新鍵值對
             // 輸出所有表單資料
-            console.log('提交的表單資料：');
+            // console.log('提交的表單資料：');
             for (const [key, value] of formData.entries()) {
                 if (value instanceof File) {
-                    console.log(`${key}: 文件名=${value.name}, 大小=${value.size} bytes, 類型=${value.type}`);
+                    // console.log(`${key}: 文件名=${value.name}, 大小=${value.size} bytes, 類型=${value.type}`);
                 } else {
-                    console.log(`${key}: ${value}`);
+                    // console.log(`${key}: ${value}`);
                 }
             }
             try {
@@ -2410,14 +2599,14 @@
         }
 
         async function loadPosts(account) {
-            console.log("account", account);
+            // console.log("account", account);
             if (!account) {
                 postsContainer.innerHTML = '<p class="no-account-message">請提供使用者帳戶</p>';
                 return;
             }
 
             postsContainer.innerHTML = '<p id="loadingPosts" class="no-account-message">載入貼文中...</p>';
-            console.log('正在載入貼文，帳戶:', account);
+            // console.log('正在載入貼文，帳戶:', account);
 
             try {
                 const response = await fetch(`${POST_API_BASE_URL}/posts/${account}`);
@@ -2449,16 +2638,16 @@
             const card = document.createElement('div');
             card.className = 'post-card';
             const time = post.timestamp ? new Date(post.timestamp).toLocaleString('zh-TW') : '剛剛';
-            console.log(post);
+            // console.log(post);
             card.innerHTML = `
                 <div class="post-header">
                     <div class="user-avatar"></div>
                     <div>
                         <span class="post-user">${current_account}</span>
+                        <span class="post-list">${post.list === 'public' ? '公開' : '私人'}</span>
                         <div class="post-time">${time}</div>
                     </div>
                 </div>
-                <div class="post-list">${post.list === 'public' ? '公開' : '私人'}</div>
                 <div class="post-content">${post.content}</div>
                 ${post.imageUrl ? `<img src="${post.imageUrl}" class="post-image" alt="貼文圖片">` : ''}
                 <div class="post-reactions">
@@ -2477,9 +2666,31 @@
             card.querySelectorAll('.reaction-btn').forEach(btn => {
                 btn.addEventListener('click', () => handleReaction(current_account, postId, btn.dataset.reaction));
             });
-
+            
+            // 為圖片添加點擊事件
+            const image = card.querySelector('.post-image');
+            if (image) {
+                image.addEventListener('click', () => {
+                    const zoomModal = document.getElementById('imageZoomModal');
+                    const zoomedImage = document.getElementById('zoomedImage');
+                    zoomedImage.src = image.src;
+                    zoomModal.style.display = 'flex';
+                });
+            }
             return card;
         }
+
+        // 關閉圖片放大模態框
+        document.addEventListener('DOMContentLoaded', () => {
+            const zoomModal = document.getElementById('imageZoomModal');
+            const zoomedImage = document.getElementById('zoomedImage');
+
+            zoomModal.addEventListener('click', (e) => {
+                if (e.target === zoomModal || e.target === zoomedImage) {
+                    zoomModal.style.display = 'none';
+                }
+            });
+        });
 
         // 處理表情反應
         async function handleReaction(account, postId, reactionType) {
@@ -2507,7 +2718,7 @@
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="recordModalLabel">記帳</h5>
+                    <h5 class="modal-title" id="recordModalLabel">編輯</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
@@ -2517,29 +2728,10 @@
                             <input type="text" class="form-control" id="recordDate" required>
                         </div>
                         <div class="mb-3">
-                            <label for="recordItem" class="form-label">款項:</label>
-                            <input type="text" class="form-control" id="recordItem" required>
-                        </div>
-                        <div class="mb-3">
                             <label for="recordAmount" class="form-label">金額:</label>
                             <input type="number" class="form-control" id="recordAmount" required>
                         </div>
-                        <div class="mb-3">
-                            <label for="recordType" class="form-label">類型:</label>
-                            <select class="form-select" id="recordType" required>
-                                <option value="" disabled selected>選擇類型</option>
-                                <option value="收入">收入</option>
-                                <option value="支出">支出</option>
-                            </select>
-                        </div>
-                        <div class="mb-3">
-                            <label for="recordCategory" class="form-label">類別:</label>
-                            <select class="form-select" id="recordCategory" required>
-                                <option value="" disabled selected>選擇類別</option>
-                                <option value="現金">現金</option>
-                                <option value="信用交割款">信用交割款</option>
-                            </select>
-                        </div>
+
                         <input type="hidden" id="recordAssetId" value="">
                     </form>
                 </div>
@@ -2550,6 +2742,34 @@
             </div>
         </div>
     </div>
-    
+    <!-- 圖片放大模態框 -->
+    <div id="imageZoomModal" class="modal" style="display: none; background: rgba(0, 0, 0, 0.8); z-index: 3000;">
+        <div class="modal-content" style="max-width: 90%; max-height: 90%; padding: 0; background: transparent;">
+            <img id="zoomedImage" style="width: 100%; height: auto; border-radius: 8px;" alt="放大圖片">
+        </div>
+    </div>
+    <!-- 登入模態框 -->
+    <div id="loginModal" class="modal" style="display: none;">
+        <div class="modal-content login-modal-content">
+            <div class="modal-header">
+                <h3>登入</h3>
+            </div>
+            <form id="loginForm" class="form-content">
+                <div class="mb-3">
+                    <label class="form-label">選擇帳戶:</label>
+                    <select class="form-select" id="loginAccountList" required>
+                        <option value="" disabled selected>請選擇帳戶</option>
+                    </select>
+                </div>
+                <div class="modal-actions">
+                    <button type="submit" class="btn-custom form-btn">登入</button>
+                </div>
+            </form>
+            <div class="modal-footer-links">
+                <a href="#register" class="footer-link">註冊</a>
+                <a href="#forgot-password" class="footer-link">找回密碼</a>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

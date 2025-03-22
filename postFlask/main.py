@@ -80,7 +80,7 @@ def get_posts_by_account(account):
                      .document(account)\
                      .collection('post')\
                      .order_by('timestamp', direction=firestore.Query.DESCENDING)\
-                     .limit(20)
+                     .limit(30)
         posts = [dict(post.to_dict(), id=post.id) for post in posts_ref.stream()]
         return jsonify(posts), 200
     except Exception as e:
