@@ -26,12 +26,10 @@
         <!-- 錢包頁面 -->
         <section id="homePage" class="page" data-title="錢包">
             <div class="card-container" id="homeContent">
-                <!-- 新增控制列 -->
                 <div class="control-bar">
-                    <button id="showDailyReportBtn" class="control-btn active" onclick="switchHomeView('dailyReport')">今日開銷</button>
+                    <button id="showDailyReportBtn" class="control-btn active" onclick="switchHomeView('dailyReport')">當天開銷</button>
                     <button id="showExpenseTrackerBtn" class="control-btn" onclick="switchHomeView('expenseTracker')">開銷追蹤</button>
                 </div>
-                <!-- 內容區域 -->
                 <div id="assetsContainer" class="assets-container" style="display: block;">
                     <div class="total-assets" id="totalAssets">
                         <span class="label">總資產</span>
@@ -39,6 +37,14 @@
                     </div>
                     <!-- 當天開銷表格 -->
                     <div id="dailyExpensesContainer" class="record-card-container" style="margin-top: 10px;"></div>
+                    <!-- AI助手留言板 -->
+                    <div id="aiAssistantBoard" class="ai-assistant-container">
+                        <h5 class="mb-3">AI助手</h5>
+                        <p class="help-text">您的財務小幫手，未來將提供智慧建議</p>
+                        <div id="aiMessages" class="ai-messages">
+                            <p class="message-placeholder">目前無訊息，敬請期待 AI 功能！</p>
+                        </div>
+                    </div>
                     <!-- 資產分布圓餅圖 -->
                     <div id="expenseChartContainer" style="max-width: 400px; margin: 20px auto;">
                         <canvas id="expenseChart"></canvas>
@@ -53,11 +59,20 @@
                     </div>
                 </div>
                 <!-- 開銷追蹤區域 -->
-                <div id="expenseTrackerContainer" class="data-view" style="display: none; padding: 10px;">
+                <div id="expenseTrackerContainer" class="data-view" style="display: none; padding: 3px;">
                     <!-- 日期範圍選擇器 -->
                     <div class="date-range-container mb-4">
                         <form id="dateRangeForm" class="row g-3">
-                            <!-- 日期選擇器（預設隱藏） -->
+                            <div class="col-12">
+                                <h5 class="mb-3">快速選擇</h5>
+                                <p class="help-text">選擇欲查看的開銷時間範圍，快速按鈕可直接篩選</p>
+                                <div class="d-flex gap-2 flex-wrap">
+                                    <button type="button" class="btn-custom form-btn flex-grow-1" id="thisMonth">本月</button>
+                                    <button type="button" class="btn-custom form-btn flex-grow-1" id="lastMonth">上月</button>
+                                    <button type="button" class="btn-custom form-btn flex-grow-1" id="thisYear">今年</button>
+                                    <button type="button" class="btn-custom form-btn flex-grow-1" id="moreDateBtn">更多</button>
+                                </div>
+                            </div>
                             <div id="datePickerContainer" class="row g-3 mt-2" style="display: none;">
                                 <div class="col-md-6">
                                     <label for="startDate" class="form-label">開始日期</label>
@@ -74,16 +89,6 @@
                                     </div>
                                 </div>
                             </div>
-                            <!-- 快速選擇 -->
-                            <div class="col-12">
-                                <label class="form-label">快速選擇</label>
-                                <div class="d-flex gap-2 flex-wrap">
-                                    <button type="button" class="btn-custom form-btn flex-grow-1" id="thisMonth">本月</button>
-                                    <button type="button" class="btn-custom form-btn flex-grow-1" id="lastMonth">上月</button>
-                                    <button type="button" class="btn-custom form-btn flex-grow-1" id="thisYear">今年</button>
-                                    <button type="button" class="btn-custom form-btn flex-grow-1" id="moreDateBtn">更多</button>
-                                </div>
-                            </div>
                             <div class="col-12 mt-3">
                                 <button type="submit" class="btn-custom form-btn">
                                     <span id="submitSpinner" class="spinner-border spinner-border-sm me-1 d-none"></span>
@@ -92,35 +97,30 @@
                             </div>
                         </form>
                     </div>
+
                     <!-- 開銷摘要 -->
                     <div id="expenseSummary" class="mb-4">
                         <h5 class="mb-3">開銷摘要</h5>
+                        <p class="help-text">總覽指定期間的開銷統計數據</p>
                         <div class="row g-3">
-                            <div class="col-md-4">
-                                <div class="summary-card">
-                                    <h6>總開銷</h6>
-                                    <h3 class="expense" id="totalExpense">NT$ 0</h3>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="summary-card">
-                                    <h6>平均每日開銷</h6>
-                                    <h3 class="expense" id="averageDailyExpense">NT$ 0</h3>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="summary-card">
-                                    <h6>交易筆數</h6>
-                                    <h3 id="transactionCount">0</h3>
-                                </div>
-                            </div>
+                            <div class="col-md-4"><div class="summary-card"><h6>總開銷</h6><h3 class="expense" id="totalExpense">NT$ 0</h3></div></div>
+                            <div class="col-md-4"><div class="summary-card"><h6>平均每日開銷</h6><h3 class="expense" id="averageDailyExpense">NT$ 0</h3></div></div>
+                            <div class="col-md-4"><div class="summary-card"><h6>交易筆數</h6><h3 id="transactionCount">0</h3></div></div>
                         </div>
                     </div>
+
                     <!-- 視覺化圖表 -->
                     <div class="row mb-4">
                         <div class="col-md-6">
+                            <p class="help-text">圖表展示類別分佈與每日趨勢</p>
                             <div class="chart-container">
                                 <canvas id="expenseCategoryChart"></canvas>
+                            </div>
+                            <div id="categoryTableContainer" class="category-table-container">
+                                <table class="category-table">
+                                    <thead><tr><th>類別</th><th>總金額</th><th>占比</th></tr></thead>
+                                    <tbody id="categoryTableBody"></tbody>
+                                </table>
                             </div>
                         </div>
                         <div class="col-md-6">
@@ -129,9 +129,11 @@
                             </div>
                         </div>
                     </div>
+
                     <!-- 開銷列表 -->
                     <div id="expenseList">
                         <h5 class="mb-3">開銷明細</h5>
+                        <p class="help-text">列出所有支出記錄，依日期排序</p>
                         <div id="expenseListContainer" class="record-card-container"></div>
                     </div>
                 </div>

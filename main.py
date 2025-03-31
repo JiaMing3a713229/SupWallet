@@ -6,6 +6,12 @@ import requests
 from lxml import html
 import json
 
+import base64
+import os
+from google import genai
+from google.genai import types
+
+client = genai.Client(api_key= 'AIzaSyDqqI2-g6VQoGvQvxixEg6xNtjlhJh9h3I')
 app = Flask(__name__)
 CORS(app)  # 啟用 CORS，允許所有來源訪問
 
@@ -418,6 +424,42 @@ def get_records(account):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+# AI 建議路由
+@app.route('/api/ai_suggestion/<account>', methods=['POST'])
+def ai_suggestion(account):
+    try:
+        # 獲取用戶輸入的數據
+        data = request.get_json()
+        suggestion = ""
+        if not data:
+            return jsonify({"suggestion": "AI助手還在睡覺喔!"}), 200
+        else:
+            # 將 JSON 數據轉換為提示文字
+            prompt = f"你好，我是 {account}，這是我的開銷情況："
+            if data:
+                prompt += "詳細記錄："
+                for record in data:
+                    amount = record.get('Amount', 0)
+                    category = record.get('Category', '其他')
+                    date = record.get('date', '未知日期')
+                    prompt += f"- {date}: {category} {amount} 元，"
+            else:
+                prompt += "無具體記錄"
+            prompt += "請提供簡短的財務建議。"
+
+            # 使用 Gemini API 生成建議
+            suggestion = client.models.generate_content(
+                model="gemini-2.0-flash", contents=prompt
+            ).text
+
+            # 返回建議文字
+            return jsonify({"suggestion": suggestion}), 200
+
+    except ValueError as ve:
+        return jsonify({"error": "數據格式錯誤: " + str(ve)}), 400
+    except Exception as e:
+        return jsonify({"error": "生成建議失敗: " + str(e)}), 500
+
 
 if __name__ == "__main__":
-    app.run(debug=True, port=8080, host='0.0.0.0')
+    app.run(debug=True)

@@ -7,8 +7,8 @@ let isLoading = false;    // 是否正在載入
 let hasMore = true;       // 是否還有更多數據
 // const API_BASE_URL = 'https://web-firestore-453815.de.r.appspot.com/api'; // Flask API 基礎 URL
 const API_BASE_URL = 'http://127.0.0.1:8080/api'
-// const POST_API_BASE_URL = 'https://postflask-dot-web-firestore-453815.de.r.appspot.com/api'; // 處理貼文功能伺服器
-const POST_API_BASE_URL = 'http://127.0.0.1:5000/api'; // 處理貼文功能伺服器
+const POST_API_BASE_URL = 'https://postflask-dot-web-firestore-453815.de.r.appspot.com/api'; // 處理貼文功能伺服器
+// const POST_API_BASE_URL = 'http://127.0.0.1:5000/api'; // 處理貼文功能伺服器
 
 // DOM 緩存
 const postsContainer = document.getElementById('postsContainer');
@@ -1292,27 +1292,87 @@ async function handleReaction(account, postId, reactionType) {
     }
 }
 
+// async function updateHomePage(account) {
+//     const assetsContainer = domCache.assetsContainer;
+
+//     // 確保 assetsContainer 存在
+//     if (!assetsContainer) {
+//         console.error('assetsContainer 未找到');
+//         return;
+//     }
+
+//     // 如果沒有帳戶，顯示提示訊息，但不覆蓋整個容器
+//     if (!account) {
+//         const messageArea = assetsContainer.querySelector('.message-area') || document.createElement('div');
+//         messageArea.className = 'message-area no-account-message';
+//         messageArea.innerHTML = '<p>尚未切換帳戶，請先切換</p>';
+//         if (!assetsContainer.contains(messageArea)) {
+//             assetsContainer.prepend(messageArea);
+//         }
+//         return;
+//     }
+
+//     // 清除之前的錯誤訊息
+//     const existingMessage = assetsContainer.querySelector('.message-area');
+//     if (existingMessage) existingMessage.remove();
+
+//     try {
+//         const response = await fetch(`${API_BASE_URL}/getSummaryDate/${account}`);
+//         if (!response.ok) throw new Error('載入當天數據失敗');
+//         const historyData = await response.json();
+
+//         const totalAssets = historyData.total_assets || 0;
+//         const todayExpenses = historyData.expenses.reduce((sum, expense) => sum + (expense.Amount || 0), 0);
+
+//         // 檢查 totalAssets 元素是否存在
+//         const totalAssetsElement = assetsContainer.querySelector('#totalAssets .value');
+//         if (!totalAssetsElement) {
+//             console.error('totalAssets .value 未找到，可能 DOM 結構已改變');
+//             assetsContainer.innerHTML = `
+//                 <div class="total-assets" id="totalAssets">
+//                     <span class="label">總資產</span>
+//                     <span class="value">NT$${formatNumber(totalAssets)}</span>
+//                 </div>
+//                 <div id="dailyExpensesContainer" class="record-card-container" style="margin-top: 10px;"></div>
+//                 <div id="expenseChartContainer" style="max-width: 400px; margin: 20px auto;">
+//                     <canvas id="expenseChart"></canvas>
+//                 </div>
+//                 <div id="assetChartContainer" style="max-width: 400px; margin: 10px auto;">
+//                     <canvas id="assetChart"></canvas>
+//                 </div>
+//             `;
+//         } else {
+//             totalAssetsElement.textContent = `NT$${formatNumber(totalAssets)}`;
+//         }
+
+//         renderDailyExpenses(historyData.expenses || [], todayExpenses);
+//         renderDistributionOnChart('assetChart', 'assetChartContainer', historyData.asset_distribution || {}, '總資產分佈', assetChart);
+//         renderDistributionOnChart('expenseChart', 'expenseChartContainer', historyData.expense_distribution || {}, '當月開銷分佈', expenseChart);
+//     } catch (error) {
+//         console.error('載入當天數據失敗:', error);
+//         const messageArea = assetsContainer.querySelector('.message-area') || document.createElement('div');
+//         messageArea.className = 'message-area no-account-message';
+//         messageArea.innerHTML = '<p>載入失敗，請稍後重試</p>';
+//         if (!assetsContainer.contains(messageArea)) {
+//             assetsContainer.prepend(messageArea);
+//         }
+//     }
+// }
+
 async function updateHomePage(account) {
     const assetsContainer = domCache.assetsContainer;
 
-    // 確保 assetsContainer 存在
     if (!assetsContainer) {
         console.error('assetsContainer 未找到');
         return;
     }
 
-    // 如果沒有帳戶，顯示提示訊息，但不覆蓋整個容器
     if (!account) {
-        const messageArea = assetsContainer.querySelector('.message-area') || document.createElement('div');
-        messageArea.className = 'message-area no-account-message';
-        messageArea.innerHTML = '<p>尚未切換帳戶，請先切換</p>';
-        if (!assetsContainer.contains(messageArea)) {
-            assetsContainer.prepend(messageArea);
-        }
+        assetsContainer.querySelector('.message-area')?.remove();
+        assetsContainer.innerHTML = '<p class="no-account-message">尚未切換帳戶，請先切換</p>';
         return;
     }
 
-    // 清除之前的錯誤訊息
     const existingMessage = assetsContainer.querySelector('.message-area');
     if (existingMessage) existingMessage.remove();
 
@@ -1324,42 +1384,76 @@ async function updateHomePage(account) {
         const totalAssets = historyData.total_assets || 0;
         const todayExpenses = historyData.expenses.reduce((sum, expense) => sum + (expense.Amount || 0), 0);
 
-        // 檢查 totalAssets 元素是否存在
         const totalAssetsElement = assetsContainer.querySelector('#totalAssets .value');
         if (!totalAssetsElement) {
-            console.error('totalAssets .value 未找到，可能 DOM 結構已改變');
+            console.error('totalAssets .value 未找到');
             assetsContainer.innerHTML = `
-                <div class="total-assets" id="totalAssets">
-                    <span class="label">總資產</span>
-                    <span class="value">NT$${formatNumber(totalAssets)}</span>
-                </div>
+                <div class="total-assets" id="totalAssets"><span class="label">總資產</span><span class="value">NT$${formatNumber(totalAssets)}</span></div>
                 <div id="dailyExpensesContainer" class="record-card-container" style="margin-top: 10px;"></div>
-                <div id="expenseChartContainer" style="max-width: 400px; margin: 20px auto;">
-                    <canvas id="expenseChart"></canvas>
+                <div id="aiAssistantBoard" class="ai-assistant-container">
+                    <h5 class="mb-3">AI助手</h5>
+                    <p class="help-text">您的財務小幫手，未來將提供智慧建議</p>
+                    <div id="aiMessages" class="ai-messages"><p class="message-placeholder">目前無訊息，敬請期待 AI 功能！</p></div>
                 </div>
-                <div id="assetChartContainer" style="max-width: 400px; margin: 10px auto;">
-                    <canvas id="assetChart"></canvas>
-                </div>
+                <div id="expenseChartContainer" style="max-width: 400px; margin: 20px auto;"><canvas id="expenseChart"></canvas></div>
+                <div id="assetChartContainer" style="max-width: 400px; margin: 10px auto;"><canvas id="assetChart"></canvas></div>
             `;
         } else {
             totalAssetsElement.textContent = `NT$${formatNumber(totalAssets)}`;
         }
 
         renderDailyExpenses(historyData.expenses || [], todayExpenses);
+        
         renderDistributionOnChart('assetChart', 'assetChartContainer', historyData.asset_distribution || {}, '總資產分佈', assetChart);
         renderDistributionOnChart('expenseChart', 'expenseChartContainer', historyData.expense_distribution || {}, '當月開銷分佈', expenseChart);
+        // 初始化 AI 留言板（未來可擴展）
+        initAIAssistant(historyData.expenses);
+        
     } catch (error) {
         console.error('載入當天數據失敗:', error);
         const messageArea = assetsContainer.querySelector('.message-area') || document.createElement('div');
         messageArea.className = 'message-area no-account-message';
         messageArea.innerHTML = '<p>載入失敗，請稍後重試</p>';
-        if (!assetsContainer.contains(messageArea)) {
-            assetsContainer.prepend(messageArea);
-        }
+        if (!assetsContainer.contains(messageArea)) assetsContainer.prepend(messageArea);
     }
 }
 
+// 初始化 AI 助手留言板
+// function initAIAssistant() {
+//     const aiMessages = document.getElementById('aiMessages');
+//     if (!aiMessages) {
+//         console.error('aiMessages 未找到');
+//         return;
+//     }
+//     // 目前顯示占位文字，未來可與 Gemini 整合
+//     aiMessages.innerHTML = '<p class="message-placeholder">目前無訊息，敬請期待 AI 功能！</p>';
+// }
 
+// 初始化 AI 助手留言板
+async function initAIAssistant(input_data) {
+    const aiMessages = document.getElementById('aiMessages');
+    if (!aiMessages) {
+        console.error('aiMessages 未找到');
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/ai_suggestion/${current_account}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(input_data) // 直接傳入 input_data
+        });
+
+        if (!response.ok) throw new Error(`載入 AI 建議失敗，狀態碼: ${response.status}`);
+
+        const data = await response.json();
+        console.log(data);
+        aiMessages.innerHTML = `<p class="ai-message">${data.suggestion}</p>`;
+    } catch (error) {
+        console.error('載入 AI 建議失敗:', error);
+        aiMessages.innerHTML = '<p class="message-placeholder">AI 建議載入失敗</p>';
+    }
+}
 
 // 初始化開銷追蹤
 function initExpenseTracker() {
@@ -1474,6 +1568,12 @@ function updateExpenseCharts(expenses) {
     if (domCache.expenseCategoryChart) domCache.expenseCategoryChart.destroy();
     if (domCache.expenseTrendsChart) domCache.expenseTrendsChart.destroy();
 
+    // 計算總金額
+    const totalAmount = Object.values(categories).reduce((sum, value) => sum + value, 0);
+    const labels = Object.keys(categories);
+    const amounts = Object.values(categories);
+    const percentages = amounts.map(amount => totalAmount > 0 ? (amount / totalAmount * 100).toFixed(1) : 0);
+
     domCache.expenseCategoryChart = new Chart(document.getElementById('expenseCategoryChart').getContext('2d'), {
         type: 'doughnut',
         data: {
@@ -1501,6 +1601,30 @@ function updateExpenseCharts(expenses) {
             }]
         },
         options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+    });
+
+    // 渲染類別表格
+    renderCategoryTable(labels, amounts, percentages);
+}
+
+// 渲染類別表格
+function renderCategoryTable(labels, amounts, percentages) {
+    const tbody = document.getElementById('categoryTableBody');
+    tbody.innerHTML = ''; // 清空現有內容
+
+    if (labels.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="3" class="no-data">無數據</td></tr>';
+        return;
+    }
+
+    labels.forEach((category, index) => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${category}</td>
+            <td>NT$${formatNumber(amounts[index])}</td>
+            <td>${percentages[index]}%</td>
+        `;
+        tbody.appendChild(row);
     });
 }
 
