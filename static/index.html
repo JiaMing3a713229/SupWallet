@@ -1461,8 +1461,8 @@
         let currentPage = 1;      // 當前頁碼
         let isLoading = false;    // 是否正在載入
         let hasMore = true;       // 是否還有更多數據
-        // const API_BASE_URL = 'https://web-firestore-453815.de.r.appspot.com/api'; // Flask API 基礎 URL
-        const API_BASE_URL = 'http://127.0.0.1:5000/api'
+        const API_BASE_URL = 'https://web-firestore-453815.de.r.appspot.com/api'; // Flask API 基礎 URL
+        // const API_BASE_URL = 'http://127.0.0.1:5000/api'
         const POST_API_BASE_URL = 'https://postflask-dot-web-firestore-453815.de.r.appspot.com/api'; // 處理貼文功能伺服器
         
         // DOM 緩存
@@ -1738,7 +1738,7 @@
                 domCache.pages.forEach(page => page.classList.toggle('active', page.id === hash));
                 domCache.navButtons.forEach(btn => btn.classList.toggle('active', btn.getAttribute('href') === `#${hash}`));
                 domCache.pageTitle.textContent = targetPage.dataset.title;
-                document.title = `SupWallet - ${targetPage.dataset.title}`;
+                document.title = `Gochy - ${targetPage.dataset.title}`;
 
                 if (!current_account) {
                     showNoAccountMessage();

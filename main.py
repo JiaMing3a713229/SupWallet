@@ -303,7 +303,7 @@ def search_records(user_id):
     # 返回 JSON 響應
     return jsonify({"records": records, "hasMore": has_more})
 
-# 獲取總收入與支出
+# 獲取當月總收入與支出
 @app.route('/api/totals/<user_id>', methods=['GET'])
 def get_total_expense(user_id):
     expenses = wallet.getMonthlyExpense(user_id)
@@ -382,6 +382,42 @@ def get_summary_data(user_id):
         return jsonify({"error": str(e)}), 500
     return "Summary data saved"
 
+# 查詢記錄的路由
+@app.route('/api/getRecordsByDateRange/<account>', methods=['GET'])
+def get_records(account):
+    try:
+        # 從查詢參數中獲取日期範圍
+        
+        start_date = request.args.get('start_date')  # 格式: YYYY/MM/DD
+        end_date = request.args.get('end_date')      # 格式: YYYY/MM/DD
+        
+        # 驗證日期參數
+        if not start_date or not end_date:
+            return jsonify({"error": "請提供 start_date 和 end_date"}), 400
+        
+        try:
+            # 驗證日期格式
+            datetime.strptime(start_date, '%Y/%m/%d')
+            datetime.strptime(end_date, '%Y/%m/%d')
+        except ValueError:
+            return jsonify({"error": "日期格式無效，應為 YYYY/MM/DD"}), 400
+
+        # 調用 getExpensebyRange 方法
+        records = wallet.getExpensebyRange(
+            user_id=account,
+            start_date=start_date,
+            end_date=end_date
+        )
+        # 返回結果
+        response = {
+            "records": records,
+            "hasMore": False  # 如果有分頁需求，可根據實際情況設置
+        }
+        return jsonify(response), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=True, port=8080, host='0.0.0.0')

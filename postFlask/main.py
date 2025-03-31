@@ -12,37 +12,39 @@ CORS(app)
 # 初始化 Firebase
 cred = credentials.Certificate("serviceAccountKey.json")  # 替換為您的服務帳戶金鑰路徑
 firebase_admin.initialize_app(cred, {
-    'storageBucket': 'supwallet_postdb'  # 替換為您的 Storage Bucket
+    'storageBucket': 'supwallet_postdb'  
 })
 db = firestore.client()
 bucket = storage.bucket()
 
+
 # 上傳貼文
 @app.route('/api/posts', methods=['POST'])
 def create_post():
-    print("接收到的表單資料：")
-    for key in request.form:
-        print(f"{key}: {request.form[key]}")
-    if 'image' in request.files:
-        print(f"image: 文件名={request.files['image'].filename}")
     try:
         # 獲取表單資料
+        print("接收到的表單資料：")
+        for key in request.form:
+            print(f"{key}: {request.form[key]}")
+
         user_id = request.form.get('userId')
         content = request.form.get('content')
-        list_type = request.form.get('list')
-        image_file = request.files.get('image')
-
-        if not user_id or not content or not list_type:
+        privacy = request.form.get('privacy')
+        image_files = request.files.getlist('images')  # 獲取多個檔案
+    
+        if not user_id or not content or not privacy:
             return jsonify({'error': 'Missing required fields'}), 400
 
-        # 上傳圖片（如果有）
-        image_url = ''
-        if image_file:
-            filename = f"posts/{user_id}/{datetime.now().strftime('%Y%m%d%H%M%S')}_{image_file.filename}"
-            blob = bucket.blob(filename)
-            blob.upload_from_file(image_file, content_type=image_file.content_type)
-            blob.make_public()  # 設置為公開可訪問
-            image_url = blob.public_url
+        # 上傳圖片並獲取 URL 列表
+        image_urls = []
+        for image_file in image_files:
+            if image_file and image_file.filename:  # 確保檔案有效
+                print(f"處理檔案: {image_file.filename}")
+                filename = f"posts/{user_id}/{datetime.now().strftime('%Y%m%d%H%M%S')}_{image_file.filename}"
+                blob = bucket.blob(filename)
+                blob.upload_from_file(image_file, content_type=image_file.content_type)
+                blob.make_public()
+                image_urls.append(blob.public_url)
 
         # 儲存貼文到 Firestore
         ref = db.collection("UserDB").document(user_id).collection("post")
@@ -50,32 +52,33 @@ def create_post():
         existing_ids = [int(doc.id) for doc in docs if doc.id.isdigit()]
         next_id = max(existing_ids, default=0) + 1 if existing_ids else 1
         document_id = str(next_id)
+
         post_data = {
             'id': next_id,
             'content': content,
-            'list': list_type,
-            'imageUrl': image_url,
+            'list': privacy,
+            'imageUrls': image_urls,  # 儲存多個圖片的 URL 列表
             'timestamp': firestore.SERVER_TIMESTAMP,
             'reactions': {'like': 0, 'love': 0, 'laugh': 0}
         }
 
-        # 檢查是否已存在
         if ref.document(document_id).get().exists:
             print(f"文檔 {document_id} 已存在，無法上傳")
-            return None
+            return jsonify({'error': 'Document already exists'}), 400
         else:
-            post_data['id'] = document_id  # 將 ID 加入資料
             ref.document(document_id).set(post_data)
             print(f"已上傳資料到 'post'/{document_id}", "data:", post_data)
-            return document_id
+            return jsonify({'message': 'Post created', 'id': document_id}), 201
+       
+
     except Exception as e:
+        print(f"錯誤: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
 # 獲取特定使用者的貼文
 @app.route('/api/posts/<account>', methods=['GET'])
 def get_posts_by_account(account):
     try:
-        # 查詢 UserDB/{account}/post 下的貼文
         posts_ref = db.collection('UserDB')\
                      .document(account)\
                      .collection('post')\
@@ -85,6 +88,7 @@ def get_posts_by_account(account):
         return jsonify(posts), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
 # 獲取所有貼文（可選，根據需求保留）
 @app.route('/api/posts', methods=['GET'])
 def get_posts():

@@ -5,10 +5,19 @@ from datetime import datetime
 import pandas as pd
 from flask import Flask, request, jsonify
 
-class Expense:
+# Expense 
+    # attribute
+        # Amount
+        # Category
+        # Item
+        # TransactionType
+        # date
+        # id, automatically generator
+class Expenses:
     def __init__(self, user_id, date, item, amount, transactionType, category):
         self.user_id = user_id
         self.date = date
+        self.item = item
         self.amount = amount
         self.transactionType = transactionType
         self.category = category
@@ -20,25 +29,32 @@ class Expense:
             "Category": self.category,
         }
 
-class Asset:
-    def __init__(self, user_id, date, item, quantity, initialAmount, type):
+    def __str__(self):
+        """返回物件的字串表示形式"""
+        return f"Expenses(user_id={self.user_id}, date={self.date}, item={self.item}, amount={self.amount}, transactionType={self.transactionType}, category={self.category})"
+
+
+class Assets:
+    def __init__(self, user_id, date, item, quantity, initialAmount, asset_type):
         self.user_id = user_id
         self.date = date
         self.item = item
         self.quantity = quantity
         self.initialAmount = initialAmount
-        self.type = type
+        self.asset_type = asset_type
         self.data = {
             "date": self.date,
             "Item": self.item,
             "Quantity": self.quantity,
             "InitialAmount": self.initialAmount,
-            "Type": self.type
+            "Type": self.asset_type
         }
+
+
 
 class SupWallet:
     def __init__(self, db_name):
-        self.service_account_key = "serviceAccountKey.json"  # 替換為你的服務帳戶金鑰路徑
+        self.service_account_key = "serviceAccountKey.json"  
         self.cred = credentials.Certificate(self.service_account_key)
         if not firebase_admin._apps:  # 避免重複初始化
             firebase_admin.initialize_app(self.cred)
@@ -176,6 +192,53 @@ class SupWallet:
                 monthly_expenseList.append(data)
         return monthly_expenseList
 
+    def getExpensebyRange(self, user_id, year=None, month=None, start_date=None, end_date=None):
+        """計算指定用戶的支出總額，可以按年月或日期範圍查詢"""
+        # 如果未提供年月，預設使用當前月份
+        now = datetime.now()
+        
+        # 處理查詢範圍
+        if start_date and end_date:
+            # 如果提供了開始和結束日期，使用日期範圍查詢
+            start_date_obj = datetime.strptime(start_date, "%Y/%m/%d")
+            end_date_obj = datetime.strptime(end_date, "%Y/%m/%d")
+        else:
+            # 使用年月查詢
+            year = year if year is not None else now.year
+            month = month if month is not None else now.month
+            
+            # 計算月份開始和結束日期
+            start_date_obj = datetime(year, month, 1)
+            # 計算下個月的第一天再減一天，得到當月最後一天
+            if month == 12:
+                end_date_obj = datetime(year + 1, 1, 1) - timedelta(days=1)
+            else:
+                end_date_obj = datetime(year, month + 1, 1) - timedelta(days=1)
+        
+        # 讀取 SpendData 集合
+        spend_ref = self.db.collection(self.database).document(user_id).collection("expenses")
+        docs = spend_ref.stream()
+        expenseList = []
+        
+        for doc in docs:
+            data = doc.to_dict()
+            date_str = data.get("date", "")
+            amount = data.get("Amount", 0.0)
+            income_or_expense = data.get("TransactionType", "")
+            
+            # 嘗試解析日期字符串
+            try:
+                transaction_date = datetime.strptime(date_str, "%Y/%m/%d")
+                
+                # 檢查日期是否在查詢範圍內
+                if start_date_obj <= transaction_date <= end_date_obj:
+                    expenseList.append(data)
+            except ValueError:
+                # 如果日期格式不正確，跳過該記錄
+                continue
+        
+        return expenseList
+
     def insert_to_expense(self, user_id, data):
         ret = self.setDataToFirestore(user_id, "expenses", data)
         return ret
@@ -284,4 +347,22 @@ class SupWallet:
             "total_income": total_income
         }
 
-        
+class ExpenseTracker(SupWallet):
+    def __init__(self, db_name="expenses_db"):
+        super().__init__(db_name)  # 呼叫 SupWallet 的初始化
+
+    def getMonthlyExpense(self, user_id, start_date=None, end_date=None):
+        """依據日期範圍獲取用戶的支出記錄"""
+        return super().getExpensebyRange(user_id, start_date=start_date, end_date=end_date)
+
+    def addExpense(self, user_id, expense_data):
+        """添加新的支出記錄"""
+        return super().insert_to_expense(user_id, expense_data)
+
+    def deleteExpense(self, user_id, expense_id):
+        """刪除支出記錄"""
+        return super().delExpense(user_id, expense_id)
+
+    def updateExpense(self, user_id, expense_id, new_data):
+        """更新支出記錄"""
+        return super().updateExpense(user_id, expense_id, new_data)

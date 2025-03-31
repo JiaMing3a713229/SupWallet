@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>Gochy 記賬網</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/css/bootstrap-datepicker.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/js/bootstrap-datepicker.min.js"></script>
+</head>
+<body>
+    <!-- 頁面頂部標題 -->
+    <header class="header-container">
+        <h1 id="pageTitle" class="mb-0">錢包</h1>
+        <select id="accountList-title" class="form-select header-dropdown">
+            <option value="select-account">切換帳戶</option>
+        </select>
+    </header>
+
+    <main class="main-container">
+        <!-- 錢包頁面 -->
+        <section id="homePage" class="page" data-title="錢包">
+            <div class="card-container" id="homeContent">
+                <!-- 新增控制列 -->
+                <div class="control-bar">
+                    <button id="showDailyReportBtn" class="control-btn active" onclick="switchHomeView('dailyReport')">今日開銷</button>
+                    <button id="showExpenseTrackerBtn" class="control-btn" onclick="switchHomeView('expenseTracker')">開銷追蹤</button>
+                </div>
+                <!-- 內容區域 -->
+                <div id="assetsContainer" class="assets-container" style="display: block;">
+                    <div class="total-assets" id="totalAssets">
+                        <span class="label">總資產</span>
+                        <span class="value">載入中...</span>
+                    </div>
+                    <!-- 當天開銷表格 -->
+                    <div id="dailyExpensesContainer" class="record-card-container" style="margin-top: 10px;"></div>
+                    <!-- 資產分布圓餅圖 -->
+                    <div id="expenseChartContainer" style="max-width: 400px; margin: 20px auto;">
+                        <canvas id="expenseChart"></canvas>
+                    </div>
+                    <div id="assetChartContainer" style="max-width: 400px; margin: 10px auto;">
+                        <canvas id="assetChart"></canvas>
+                    </div>
+                    <div class="footer-info" style="text-align: center; margin-top: 20px; padding-bottom: 20px;">
+                        <p style="font-size: 0.8rem; color: var(--text-secondary); margin: 0;">
+                            version: 1.0.0 | copy right: JiaMing
+                        </p>
+                    </div>
+                </div>
+                <!-- 開銷追蹤區域 -->
+                <div id="expenseTrackerContainer" class="data-view" style="display: none; padding: 10px;">
+                    <!-- 日期範圍選擇器 -->
+                    <div class="date-range-container mb-4">
+                        <form id="dateRangeForm" class="row g-3">
+                            <!-- 日期選擇器（預設隱藏） -->
+                            <div id="datePickerContainer" class="row g-3 mt-2" style="display: none;">
+                                <div class="col-md-6">
+                                    <label for="startDate" class="form-label">開始日期</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">📅</span>
+                                        <input type="text" class="form-control datepicker" id="startDate" name="start_date" placeholder="YYYY/MM/DD" autocomplete="off">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="endDate" class="form-label">結束日期</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">📅</span>
+                                        <input type="text" class="form-control datepicker" id="endDate" name="end_date" placeholder="YYYY/MM/DD" autocomplete="off">
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- 快速選擇 -->
+                            <div class="col-12">
+                                <label class="form-label">快速選擇</label>
+                                <div class="d-flex gap-2 flex-wrap">
+                                    <button type="button" class="btn-custom form-btn flex-grow-1" id="thisMonth">本月</button>
+                                    <button type="button" class="btn-custom form-btn flex-grow-1" id="lastMonth">上月</button>
+                                    <button type="button" class="btn-custom form-btn flex-grow-1" id="thisYear">今年</button>
+                                    <button type="button" class="btn-custom form-btn flex-grow-1" id="moreDateBtn">更多</button>
+                                </div>
+                            </div>
+                            <div class="col-12 mt-3">
+                                <button type="submit" class="btn-custom form-btn">
+                                    <span id="submitSpinner" class="spinner-border spinner-border-sm me-1 d-none"></span>
+                                    查詢開銷
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                    <!-- 開銷摘要 -->
+                    <div id="expenseSummary" class="mb-4">
+                        <h5 class="mb-3">開銷摘要</h5>
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <div class="summary-card">
+                                    <h6>總開銷</h6>
+                                    <h3 class="expense" id="totalExpense">NT$ 0</h3>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="summary-card">
+                                    <h6>平均每日開銷</h6>
+                                    <h3 class="expense" id="averageDailyExpense">NT$ 0</h3>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="summary-card">
+                                    <h6>交易筆數</h6>
+                                    <h3 id="transactionCount">0</h3>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- 視覺化圖表 -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="chart-container">
+                                <canvas id="expenseCategoryChart"></canvas>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="chart-container">
+                                <canvas id="expenseTrendsChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- 開銷列表 -->
+                    <div id="expenseList">
+                        <h5 class="mb-3">開銷明細</h5>
+                        <div id="expenseListContainer" class="record-card-container"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+
+        <!-- 管理頁面：整合帳本和持股 -->
+        <section id="managePage" class="page" data-title="查看">
+            <div class="card-container">
+                <!-- 切換卡片 -->
+                <div class="option-container" style="margin-bottom: 3px;">
+                    <div class="option-card" id="showStocksCard" data-section="stocksSection" style="background: var(--secondary); color: white;">
+                        <h3>資產</h3>
+                    </div>
+                    <div class="option-card" id="showRecordsCard" data-section="recordsSection" style="background: var(--primary); color: white;">
+                        <h3>帳本</h3>
+                    </div> 
+                </div>
+
+                <!-- 帳本內容區域 -->
+                <div class="table-container" id="recordsSection" style="display: block;">
+                    <select class="form-select mb-3" id="accountList">
+                        <option value="">顯示全部</option>
+                    </select>
+                    <div id="summaryCard" class="card-container" style="display: none;"></div>
+                    <div id="recordCardContainer" class="record-card-container"></div>
+                    <div id="loading" class="loading" style="display: none;">載入中...</div>
+                </div>
+
+                <!-- 持股內容區域 -->
+                <div id="stocksSection" class="stock-container" style="display: none;">
+                    <!-- 控制列 -->
+                    <div class="control-bar">
+                        <button id="showAssetsBtn" class="control-btn" onclick="switchDataView('assets')">現金</button>
+                        <button id="showStocksBtn" class="control-btn active" onclick="switchDataView('stocks')">證券</button>   
+                    </div>
+                    <!-- 資料顯示區域 -->
+                    <div id="stocksDataView" class="data-view" style="display: none;"></div>
+                    <div id="assetsDataView" class="data-view"></div> 
+                </div>
+            </div>
+        </section>
+
+        <!-- 發現頁面：貼文系統 -->
+        <section id="sharePage" class="page" data-title="發現">
+            <div class="card-container">
+                <!-- 貼文輸入區域 -->
+                <div class="post-input-container">
+                    <div class="post-input-header">
+                        <div class="user-avatar"></div>
+                        <input type="text" id="quickPostInput" class="post-input" placeholder="有什麼新鮮事？" onclick="openPostModal()">
+                    </div>
+                </div>
+
+                <!-- 貼文列表 -->
+                <div id="postsContainer" class="posts-container">
+                    <p id="loadingPosts" class="no-account-message">載入貼文中...</p>
+                </div>
+
+                <!-- 貼文表單模態框 -->
+                <div id="postModal" class="modal" style="display: none;">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3>新增貼文</h3>
+                            <button type="button" id="closePostFormBtn" class="btn-close">×</button>
+                        </div>
+                        <form id="postForm" class="form-content" enctype="multipart/form-data">
+                            <div class="post-form-user">
+                                <div class="user-avatar"></div>
+                                <div class="user-info">
+                                    <select class="form-select privacy-select" id="postList" name="privacy" required>
+                                        <option value="public">公開</option>
+                                        <option value="private">私人</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <textarea class="form-control post-textarea" id="postContent" name="content" rows="3" required placeholder="有什麼新鮮事？"></textarea>
+                            </div>
+                            <div class="mb-3 image-upload-container">
+                                <label class="form-label">圖片 (選填，可選擇多張):</label>
+                                <input type="file" class="form-control" id="postImage" name="images" accept="image/*" multiple>
+                                <div id="imagePreview" class="image-preview-container"></div>
+                            </div>
+                            <div class="modal-actions">
+                                <button type="submit" class="btn-custom form-btn">發布</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 紀錄頁面 -->
+        <section id="chargePage" class="page" data-title="紀錄">
+            <div class="card-container">
+                <div class="option-container">
+                    <div class="option-card" data-form="accountForm" style="background-color: var(--success); color: white;">
+                        <h3>記帳</h3>
+                    </div>
+                    <div class="option-card" data-form="assetForm" style="background-color: var(--info); color: white;">
+                        <h3>資產</h3>
+                    </div>
+                </div>
+                <form id="accountForm" class="form-content" style="display: none;">
+                    <div class="mb-3">
+                        <label class="form-label">日期:</label>
+                        <input type="text" class="form-control" id="inputDate1" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">款項:</label>
+                        <input type="text" class="form-control" id="items1" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">帳戶:</label>
+                        <select class="form-select" id="accountList2" required>
+                            <option value="" disabled selected>選擇帳戶</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">收入&支出:</label>
+                        <select class="form-select" id="isIncome1" required>
+                            <option value="" disabled selected>選擇類型</option>
+                            <option value="收入">收入</option>
+                            <option value="支出">支出</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">類別:</label>
+                        <select class="form-select" id="property1" required>
+                            <option value="" disabled selected>選擇類別</option>
+                            <option value="食">食</option>
+                            <option value="衣">衣</option>
+                            <option value="娛樂">娛樂</option>
+                            <option value="運動">運動</option>
+                            <option value="交通">交通</option>
+                            <option value="醫療">醫療</option>
+                            <option value="3C">3C</option>
+                            <option value="教育">教育</option>
+                            <option value="小可愛">小可愛</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">金額:</label>
+                        <input type="number" class="form-control" id="amounts1" required>
+                    </div>
+                    <button type="submit" class="btn-custom form-btn" onclick="submitFinForm(event)">提交</button>
+                </form>
+                <form id="assetForm" class="form-content" style="display: none;">
+                    <div class="mb-3">
+                        <label class="form-label">日期:</label>
+                        <input type="text" class="form-control" id="inputDate2" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">資產名稱:</label>
+                        <input type="text" class="form-control" id="assetName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="stocksAccount1" class="form-label">帳戶:</label>
+                        <select class="form-select" id="accountList3" required>
+                            <option value="" disabled selected>選擇帳戶</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="category1" class="form-label">類別:</label>
+                        <select class="form-select" id="category1" name="category1" required>
+                            <option selected disabled value="">選擇類別</option>
+                            <option value="美債">美債</option>
+                            <option value="ETF">ETF</option>
+                            <option value="金融股">金融股</option>
+                            <option value="股票">股票</option>
+                            <option value="定存">定存</option>
+                            <option value="活存">活存</option>
+                            <option value="虛擬貨幣">虛擬貨幣</option>
+                            <option value="交割款">交割款</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">股數:</label>
+                        <input type="number" class="form-control" id="assetValue" placeholder="請輸入證券股數">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">投資金額:</label>
+                        <input type="number" class="form-control" id="inventValue" required>
+                    </div>
+                    <button type="submit" class="btn-custom form-btn" onclick="submitStockForm(event)">提交</button>
+                </form>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- 底部導航欄 -->
+    <footer class="nav-bar">
+        <a href="#homePage" class="nav-button active">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/>
+            </svg>
+            <span>錢包</span>
+        </a>
+        <a href="#managePage" class="nav-button">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/>
+            </svg>
+            <span>查看</span>
+        </a>
+        <a href="#sharePage" class="nav-button">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2Zm4 11h-3v3a1 1 0 0 1-2 0v-3H8a1 1 0 0 1 0-2h3V8a1 1 0 0 1 2 0v3h3a1 1 0 0 1 0 2Z"/>
+            </svg>
+            <span>發現</span>
+        </a>
+        <a href="#chargePage" class="nav-button">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M5 12h14"/><path d="M12 5v14"/>
+            </svg>
+            <span>紀錄</span>
+        </a>
+    </footer>
+
+    <!-- 記帳模態框 -->
+    <div class="modal fade" id="recordModal" tabindex="-1" aria-labelledby="recordModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="recordModalLabel">編輯</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="recordForm">
+                        <div class="mb-3">
+                            <label for="recordDate" class="form-label">日期:</label>
+                            <input type="text" class="form-control" id="recordDate" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="recordAmount" class="form-label">金額:</label>
+                            <input type="number" class="form-control" id="recordAmount" required>
+                        </div>
+
+                        <input type="hidden" id="recordAssetId" value="">
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">關閉</button>
+                    <button type="button" class="btn btn-custom" id="submitRecordBtn">提交</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- 圖片放大模態框 -->
+    <div id="imageZoomModal" class="modal" style="display: none; background: rgba(0, 0, 0, 0.8); z-index: 3000;">
+        <div class="modal-content" style="max-width: 90%; max-height: 90%; padding: 0; background: transparent;">
+            <img id="zoomedImage" style="width: 100%; height: auto; border-radius: 8px;" alt="放大圖片">
+        </div>
+    </div>
+    <!-- 登入模態框 -->
+    <div id="loginModal" class="modal" style="display: none;">
+        <div class="modal-content login-modal-content">
+            <div class="modal-header">
+                <h3>登入</h3>
+            </div>
+            <form id="loginForm" class="form-content">
+                <div class="mb-3">
+                    <label class="form-label">選擇帳戶:</label>
+                    <select class="form-select" id="loginAccountList" required>
+                        <option value="" disabled selected>請選擇帳戶</option>
+                    </select>
+                </div>
+                <div class="modal-actions">
+                    <button type="submit" class="btn-custom form-btn">登入</button>
+                </div>
+            </form>
+            <div class="modal-footer-links">
+                <a href="#register" class="footer-link">註冊</a>
+                <a href="#forgot-password" class="footer-link">找回密碼</a>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" defer></script>
+    <script src="scripts.js" defer></script>
+</body>
+</html>
