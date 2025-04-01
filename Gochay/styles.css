@@ -1467,9 +1467,7 @@ footer.hidden {
 
 /* 未來訊息樣式（預留） */
 .ai-message {
-    margin: 5px 0;
-    padding: 8px;
-    background-color: #e9f7ff;
-    border-radius: 4px;
+    margin: 2px 0;
+    padding: 2px;
     color: #333;
 }

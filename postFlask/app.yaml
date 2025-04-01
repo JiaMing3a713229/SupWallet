@@ -1,8 +1,6 @@
 runtime: python312  # 根據您的 Python 版本調整，例如 python312
-service: post_flask  # 定義服務名稱為 post_flask
+service: postflask  # 定義服務名稱為 post_flask
 instance_class: F1  # 選擇實例類型，F1 是免費層級
-
-entrypoint: gunicorn -b :$PORT main:app
 
 handlers:
 - url: /.*
@@ -10,14 +8,6 @@ handlers:
 
 # 指定主應用程式檔案
 entrypoint: gunicorn -b :$PORT main:app
-
-# 處理靜態檔案（如果有，例如 index.html）
-handlers:
-  - url: /static
-    static_dir: static  # 如果您有靜態檔案，放在 static 資料夾
-
-  - url: /.*
-    script: auto  # 動態請求由 Flask 處理
 
 # 確保依賴在部署時安裝
 automatic_scaling:

@@ -5,8 +5,8 @@ const initialLoad = 15;   // 初始載入記錄數量
 let currentPage = 1;      // 當前頁碼
 let isLoading = false;    // 是否正在載入
 let hasMore = true;       // 是否還有更多數據
-// const API_BASE_URL = 'https://web-firestore-453815.de.r.appspot.com/api'; // Flask API 基礎 URL
-const API_BASE_URL = 'http://127.0.0.1:8080/api'
+const API_BASE_URL = 'https://web-firestore-453815.de.r.appspot.com/api'; // Flask API 基礎 URL
+// const API_BASE_URL = 'http://127.0.0.1:8080/api'
 const POST_API_BASE_URL = 'https://postflask-dot-web-firestore-453815.de.r.appspot.com/api'; // 處理貼文功能伺服器
 // const POST_API_BASE_URL = 'http://127.0.0.1:5000/api'; // 處理貼文功能伺服器
 
@@ -1418,7 +1418,7 @@ async function updateHomePage(account) {
     }
 }
 
-// 初始化 AI 助手留言板
+// // 初始化 AI 助手留言板
 // function initAIAssistant() {
 //     const aiMessages = document.getElementById('aiMessages');
 //     if (!aiMessages) {
