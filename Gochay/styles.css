@@ -100,28 +100,25 @@ header.hidden {
 .stock-container {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 8px;
-    padding: 6px;
+    gap: 10px; /* 增加卡片間距 */
+    padding: 5px; /* 容器內邊距 */
 }
 
 .stock-card{
     background: var(--card-bg);
-    border-radius: 5px;
-    padding: 6px;
-    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 8px; /* 圓角 */
+    /* padding: 12px; */ /* 移除固定 padding，讓內部控制 */
+    border: 1px solid rgba(0, 0, 0, 0.08); /* 更細緻的邊框 */
     transition: transform 0.2s ease, box-shadow 0.2s ease;
-    height: auto;
-    min-height: 30px;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    overflow: hidden;
-    cursor: pointer;
+    display: flex; /* 改為 flex，方便內容和 actions 分開 */
+    flex-direction: column; /* 垂直排列 */
+    overflow: hidden; /* 確保內容不溢出 */
+    cursor: pointer; /* 保持可點擊提示 */
 }
 
-.stock-card:hover{
-    transform: translateY(-2px);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+.stock-card:hover {
+    transform: translateY(-3px); /* 稍微明顯的 hover 效果 */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* 更明顯的陰影 */
 }
 
 .stock-header{
@@ -153,6 +150,45 @@ header.hidden {
 .stock-card.active .stock-actions {
     opacity: 1;
     height: 50px;
+}
+
+.record-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    height: 0;
+    overflow: hidden;
+    transition: opacity 0.3s ease, height 0.3s ease;
+}
+
+.record-card.active .record-actions {
+    opacity: 1;
+    height: 45px;
+}
+
+.btn-custom.acc-btn {
+    padding: 8px 16px;
+    font-size: 0.9rem;
+    border-radius: 4px;
+}
+
+
+.btn-custom {
+    background: var(--primary);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 4px;
+    border: none;
+    font-size: 0.9rem;
+    font-weight: 400;
+    text-transform: uppercase;
+    transition: all 0.3s ease;
+}
+
+.btn-custom:hover {
+    transform: translateY(-2px);
 }
 
 .btn-buy {
@@ -229,23 +265,6 @@ header.hidden {
 .form-control:focus, .form-select:focus {
     border-color: var(--primary);
     box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
-}
-
-.btn-custom {
-    background: var(--primary);
-    color: white;
-    padding: 8px 16px;
-    border-radius: 4px;
-    border: none;
-    font-size: 0.9rem;
-    font-weight: 400;
-    text-transform: uppercase;
-    transition: all 0.3s ease;
-}
-
-.btn-custom:hover {
-    background: var(--secondary);
-    transform: translateY(-2px);
 }
 
 footer.nav-bar {
@@ -404,12 +423,6 @@ footer.hidden {
     height: 45px;
 }
 
-.btn-custom.acc-btn {
-    padding: 8px 16px;
-    font-size: 0.9rem;
-    border-radius: 4px;
-}
-
 .record-card.income-card {
     background-color: rgba(126, 211, 33, 0.1);
 }
@@ -507,23 +520,9 @@ footer.hidden {
     font-size: 0.8rem;
 }
 
-#accountForm .btn-custom.form-btn.compact-btn,
-#assetForm .btn-custom.form-btn.compact-btn {
-    font-size: 0.9rem;
-    padding: 8px 16px;
-    width: 100px;
-    margin: 8px auto 0;
-    border-radius: 4px;
-}
-
 .card-container {
     overflow-y: auto;
     /* max-height: calc(100vh - 120px); */
-}
-
-#accountForm .btn-custom.form-btn, #assetForm .btn-custom.form-btn {
-    font-size: 0.9rem;
-    padding: 8px 24px;
 }
 
 .assets-container {
@@ -619,13 +618,6 @@ footer.hidden {
 
     #accountForm .form-label, #assetForm .form-label {
         font-size: 0.8rem;
-    }
-
-    #accountForm .btn-custom.form-btn.compact-btn,
-    #assetForm .btn-custom.form-btn.compact-btn {
-        font-size: 0.8rem;
-        padding: 8px 16px;
-        width: 100px;
     }
 
     .assets-container {
@@ -795,14 +787,6 @@ footer.hidden {
 .btn-text {
   font-size: 14px;
 }
-/* 控制列樣式 */
-.control-bar {
-    display: flex;
-    justify-content: center;
-    gap: 10px;
-    margin-bottom: 2px;
-}
-
 .control-btn {
     padding: 8px 24px;
     border: none;
@@ -1297,25 +1281,44 @@ footer.hidden {
     }
 }
 
-
-
-
 /* 控制列樣式已存在，這裡調整適配 */
 .control-bar {
     display: flex;
-    justify-content: center;
+    justify-content: flex-end;
+    padding: 5px 0;
+    padding-right: 10px; /* Add some padding to the bar itself */
+    gap: 10px;
+}
+/* 控制列樣式已存在，這裡調整適配 */
+.control-bar.asset-bar {
+    display: flex;
+    /* justify-content: flex-end; */ /* Remove this if using margin: auto */
+    align-items: center; /* Vertically align items in the center */
     gap: 10px;
     margin-bottom: 10px;
+    padding: 0 10px; /* Add some padding to the bar itself */
+    min-height: 40px; /* Ensure a minimum height */
+}
+/* Style for the new summary amount */
+.summary-amount {
+    font-size: 1rem;
+    font-weight: 600; /* Make it bold */
+    color: var(--text-primary);
+    /* This pushes the summary to the left and buttons to the right */
+    margin-right: auto;
+    /* Optional: Add padding if needed */
+    padding-right: 10px;
 }
 
 .control-btn {
-    padding: 8px 24px;
+    padding: 8px 18px;
     border: none;
     border-radius: 4px;
     background-color: var(--primary);
     color: white;
     cursor: pointer;
     transition: background-color 0.3s ease;
+    flex-shrink: 0;
 }
 
 .control-btn.active {
@@ -1370,26 +1373,6 @@ footer.hidden {
 #datePickerContainer.hidden {
     display: none;
 }
-
-/* 按鈕基礎樣式 */
-.btn-custom.form-btn {
-    background-color: transparent; /* 背景透明 */
-    color: #7f7b7b; /* 灰黑色文字，可以調整色碼 */
-    font-weight: 1000; /* 微粗體，500 表示 medium，若需更粗可改為 600 */
-    border: 1px solid #d1d1d1; /* 細框線，淺灰色 */
-    padding: 6px 12px; /* 內邊距 */
-    font-size: 0.9rem; /* 文字大小 */
-    border-radius: 4px; /* 圓角 */
-    border: none; /* 移除完整框線 */
-    border-bottom: 1px solid #d1d1d1; /* 只顯示下方細框線 */
-    transition: background-color 0.2s ease, color 0.2s ease; /* 平滑過渡效果 */
-}
-
-/* 滑鼠懸停時（可選） */
-.btn-custom.form-btn:hover {
-    background-color: rgba(0, 0, 0, 0.05); /* 輕微灰色背景，增加互動感 */
-}
-
 
 /* 確保 spinner 不影響樣式 */
 #submitSpinner {
@@ -1470,4 +1453,291 @@ footer.hidden {
     margin: 2px 0;
     padding: 2px;
     color: #333;
+}
+
+
+/* 記帳表單 CSS */
+.form-section {
+    margin-bottom: 30px;
+}
+
+.form-label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+    color: #333;
+}
+
+.form-input{
+    width: 100%;
+    padding: 3px;
+    border: 1px solid #aaa;
+    border-radius: 4px;
+    font-size: 1rem;
+}
+
+.form-input:focus{
+    outline: none;
+    border-color: #007bff; /* Focus color */
+    box-shadow: 0 0 5px rgba(0, 123, 255, 0.5); /* Subtle shadow */
+}
+
+.input-group {
+    display: flex;
+}
+
+.input-group-text {
+    padding: 0.375rem 0.75rem;
+    font-size: 1rem;
+    font-weight: 400;
+    line-height: 1;
+    color: #495057;
+    text-align: center;
+    white-space: nowrap;
+    background-color: #e9ecef;
+    border: 1px solid #ced4da;
+    border-radius: 0.25rem 0 0 0.25rem;
+}
+
+.fixed-action-buttons {
+    position: fixed; /* 固定定位 */
+    bottom: 90px;  /* 底部距離，需考慮下方導航欄高度 */
+    right: 20px; /* 右側距離 */
+    z-index: 1050; /* 確保在其他元素之上，但在 modal 之下 */
+    display: flex; /* 如果有多個按鈕並排 */
+    gap: 10px; /* 按鈕間距 */
+}
+
+.fixed-submit-btn {
+    padding: 12px 15px; /* 稍大一點的 padding */
+    font-size: 1rem; /* 稍大一點的字體 */
+    border-radius: 15px; /* 圓角或膠囊狀 */
+    border: none; /* 去掉邊框 */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* 添加陰影 */
+    /* 可以根據需要為不同按鈕設置不同背景色 */
+    /* 例如 #submitAccountBtn 用 var(--success) */
+    /* #submitAssetBtn 用 var(--info) */
+}
+
+#submitAccountBtn {
+    background-color: var(--success);
+    color: white;
+}
+
+
+
+#submitAssetBtn {
+    background-color: var(--info);
+    color: white;
+}
+
+/* end for add account and assets btn */
+
+
+.record-actions {
+    display: flex;
+    gap: 8px;
+    /* justify-content: center; */ /* 移除或註釋掉 */
+    justify-content: flex-end; /* 將按鈕推到右邊 */
+    align-items: center;
+    opacity: 0;
+    height: 0;
+    overflow: hidden;
+    transition: opacity 0.3s ease, height 0.3s ease;
+    padding-right: 12px; /* 可選：增加一些右邊距 */
+    padding-bottom: 3px; /* 可選：增加一些底邊距 */
+}
+
+.stock-actions{
+    display: flex;
+    gap: 8px;
+    /* justify-content: center; */ /* 移除或註釋掉 */
+    justify-content: flex-end; /* 將按鈕推到右邊 */
+    align-items: center;
+    opacity: 0;
+    height: 0;
+    overflow: hidden;
+    transition: opacity 0.3s ease, height 0.3s ease;
+    padding-right: 12px; /* 可選：增加一些右邊距 */
+    padding-bottom: 3px; /* 可選：增加一些底邊距 */
+}
+
+/* .assetItem-actions 已經是 flex 且靠右，確認樣式即可 */
+.assetItem-actions {
+  display: flex;
+  justify-content: flex-end; /* 確保是 flex-end */
+  align-items: center; /* 垂直居中 */
+}
+
+
+.stock-details {
+    display: flex;
+    justify-content: space-between; /* 股數靠左，損益靠右 */
+    align-items: center;
+    font-size: 0.9rem; /* 稍小字體 */
+    color: var(--text-secondary);
+}
+
+.stock-profit-loss .arrow {
+    font-size: 1rem; /* 箭頭大小 */
+    line-height: 1; /* 確保箭頭垂直居中 */
+}
+
+/* --- 顏色定義 (沿用之前的) --- */
+.positive { color: var(--success, #28a745); } /* 添加預設顏色 */
+.negative { color: var(--danger, #dc3545); }
+.neutral { color: var(--text-secondary, #6c757d); }
+
+/* --- 操作按鈕區域 --- */
+.stock-actions {
+    display: flex;
+    gap: 10px; /* 按鈕間距 */
+    justify-content: flex-end; /* *** 按鈕靠右 *** */
+    align-items: center;
+    background-color: rgba(0, 0, 0, 0.03); /* 輕微背景區分 */
+    padding: 10px 15px; /* 內邊距 */
+    max-height: 0; /* 初始隱藏高度 */
+    opacity: 0; /* 初始透明 */
+    overflow: hidden;
+    transition: max-height 0.3s ease, opacity 0.3s ease, padding 0.3s ease; /* 平滑過渡 */
+    border-top: 1px solid rgba(0, 0, 0, 0.05); /* 頂部分隔線 */
+    justify-content: flex-end; /* 確保按鈕靠右 */
+}
+
+/* 當卡片被點擊，添加 active class 時顯示 actions */
+.stock-card.active .stock-actions {
+    max-height: 60px; /* 展開時的最大高度 */
+    opacity: 1; /* 完全顯示 */
+    padding: 10px 15px; /* 恢復內邊距 */
+}
+
+/* 按鈕樣式 (可沿用或微調) */
+.btn-buy, .btn-sell {
+    padding: 6px 14px; /* 按鈕大小 */
+    border-radius: 5px;
+    border: none;
+    font-size: 0.85rem;
+    font-weight: 500; /* 中等粗細 */
+    text-transform: uppercase;
+    color: white;
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+.btn-buy {
+    background: var(--success, #28a745);
+}
+.btn-buy:hover {
+    background: #218838; /* 加深顏色 */
+}
+.btn-buy:active {
+    transform: scale(0.95); /* 按下效果 */
+}
+
+.btn-sell {
+    background: var(--danger, #dc3545);
+}
+.btn-sell:hover {
+    background: #c82333; /* 加深顏色 */
+}
+.btn-sell:active {
+    transform: scale(0.95); /* 按下效果 */
+}
+
+/* Container for the entire stock view (header + cards) */
+.stock-view-container {
+    padding: 0 10px 10px 10px; /* Add padding around the view */
+}
+
+/* Styles for the header row */
+.stock-list-header {
+    display: grid; /* 改為 Grid */
+    /* 定義 4 個欄位以及它們的寬度 */
+    /* 1fr (項目) | 20% (股數) | 25% (現值) | 28% (損益) - 百分比可能需要微調 */
+    grid-template-columns: 1fr 18% 25% 28%;
+    gap: 5px; /* 欄位間距 */
+    padding: 8px 10px; /* 調整內邊距 */
+    margin-bottom: 5px;
+    border-bottom: 1px solid var(--primary);
+    background-color: rgba(74, 144, 226, 0.05);
+    border-radius: 5px 5px 0 0;
+    align-items: baseline; /* 垂直對齊方式 */
+}
+
+.header-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--primary);
+    text-align: right; /* 預設靠右 */
+    white-space: nowrap;
+}
+
+.header-label.item-label {
+    text-align: left; /* 項目靠左 */
+}
+
+.header-label.quantity-label{
+    text-align: left;
+}
+.header-label.value-label{
+    text-align: center; /* 現值靠右 */
+}
+.header-label.pl-label{
+    text-align: center; /* 損益靠右 */
+}
+
+/* Container for the actual stock cards - Apply grid here */
+.stock-cards-area {
+    display: grid;
+    grid-template-columns: 1fr; /* Mobile first - single column */
+    gap: 10px; /* Space between cards */
+}
+
+/* Make sure the 'no message' spans the grid if needed */
+.stock-cards-area > .no-account-message {
+    grid-column: 1 / -1; /* Span full width */
+    text-align: center;
+    padding: 20px;
+}
+
+/* 修改 stock-card-content 樣式 */
+.stock-card-content.single-row {
+    display: grid; /* 同樣改為 Grid */
+    /* *** 使用與標題完全相同的欄位定義 *** */
+    grid-template-columns: 1fr 18% 25% 28%;
+    gap: 3px; /* 相同的欄位間距 */
+    align-items: baseline; /* 相同的垂直對齊 */
+    padding: 10px 3px; /* 調整內邊距，讓其視覺上與標題對齊 */
+    /* 移除 Flexbox 相關屬性 */
+    /* justify-content: space-between; */
+    /* flex-wrap: nowrap; */
+}
+
+.sc-item-name {
+    font-weight: 600;
+    color: var(--text-primary);
+    /* text-align: left; 項目名稱靠左 */
+}
+
+.sc-quantity {
+    color: var(--text-secondary);
+}
+
+.sc-current-value {
+    font-weight: 600;
+    text-align: center; /* 右對齊 */
+    /* 顏色由 positive/negative/neutral class 控制 */
+}
+
+.sc-profit-loss {
+    font-weight: 500;
+    font-size: 0.9rem; /* 損益部分字體可再小一點 */
+    /* 顏色由 positive/negative/neutral class 控制 */
+    display: inline-flex; /* 使用 inline-flex 讓內部元素也能很好對齊 */
+    gap: 2px; /* 內部元素間距 */
+    text-align: right;
+}
+
+.sc-profit-loss .arrow {
+    font-size: 0.9rem; /* 箭頭大小 */
 }

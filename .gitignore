@@ -2,3 +2,4 @@ venv/
 autoUpdate.py
 *.csv
 serviceAccountKey.json
+api_kry/

@@ -167,12 +167,21 @@
                 <!-- 持股內容區域 -->
                 <div id="stocksSection" class="stock-container" style="display: none;">
                     <!-- 控制列 -->
-                    <div class="control-bar">
+                    <div class="control-bar asset-bar">
+                        <span id="controlBarSummary" class="summary-amount">總金額: NT$ 0</span>
                         <button id="showAssetsBtn" class="control-btn" onclick="switchDataView('assets')">現金</button>
                         <button id="showStocksBtn" class="control-btn active" onclick="switchDataView('stocks')">證券</button>   
                     </div>
                     <!-- 資料顯示區域 -->
-                    <div id="stocksDataView" class="data-view" style="display: none;"></div>
+                    <div id="stocksDataView" class="data-view" style="display: none;">
+                        <div class="stock-list-header">
+                            <span class="header-label item-label">項目</span>
+                            <span class="header-label quantity-label">股數</span>
+                            <span class="header-label value-label">現值</span>
+                            <span class="header-label pl-label">損益</span>
+                        </div>
+                        <div class="stock-cards-area"></div>
+                    </div>
                     <div id="assetsDataView" class="data-view"></div> 
                 </div>
             </div>
@@ -239,50 +248,75 @@
                         <h3>資產</h3>
                     </div>
                 </div>
-                <form id="accountForm" class="form-content" style="display: none;">
+
+                <form id="accountForm" class="form-content">
                     <div class="mb-3">
                         <label class="form-label">日期:</label>
                         <input type="text" class="form-control" id="inputDate1" required>
                     </div>
+                  
                     <div class="mb-3">
-                        <label class="form-label">款項:</label>
-                        <input type="text" class="form-control" id="items1" required>
+                        <label for="items" class="form-label">項目:</label>
+                        <input type="text" id="items" name="items" class="form-input" required>
                     </div>
+                  
                     <div class="mb-3">
-                        <label class="form-label">帳戶:</label>
-                        <select class="form-select" id="accountList2" required>
-                            <option value="" disabled selected>選擇帳戶</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">收入&支出:</label>
-                        <select class="form-select" id="isIncome1" required>
-                            <option value="" disabled selected>選擇類型</option>
-                            <option value="收入">收入</option>
-                            <option value="支出">支出</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">類別:</label>
-                        <select class="form-select" id="property1" required>
+                        <label for="category" class="form-label">類別:</label>
+                        <select id="category" name="category" class="form-select" required>
                             <option value="" disabled selected>選擇類別</option>
                             <option value="食">食</option>
                             <option value="衣">衣</option>
+                            <option value="住">住</option>
+                            <option value="行">行</option>
                             <option value="娛樂">娛樂</option>
-                            <option value="運動">運動</option>
-                            <option value="交通">交通</option>
                             <option value="醫療">醫療</option>
-                            <option value="3C">3C</option>
-                            <option value="教育">教育</option>
-                            <option value="小可愛">小可愛</option>
+                            <option value="保險">保險</option>
                         </select>
                     </div>
+                  
                     <div class="mb-3">
-                        <label class="form-label">金額:</label>
-                        <input type="number" class="form-control" id="amounts1" required>
+                        <label for="transactionType" class="form-label">支出&收入:</label>
+                        <select id="transactionType" name="transactionType" class="form-select" required>
+                            <option value="收益" disabled selected>選擇類型</option>
+                            <option value="支出">支出</option>
+                            <option value="收入">收入</option>
+                        </select>
                     </div>
-                    <button type="submit" class="btn-custom form-btn" onclick="submitFinForm(event)">提交</button>
+      
+                    <div class="mb-3">
+                        <label for="payment_method" class="form-label">支付方式:</label>
+                        <select id="payment_method" name="paymentMethod" class="form-select" required>
+                            <option value="付款方式" disabled selected>選擇付款方式</option>
+                            <option value="現金">現金</option>
+                            <option value="信用卡">信用卡</option>
+                        </select>
+                    </div>
+                  
+                    <div class="mb-3">
+                        <label for="merchant" class="form-label">商店名稱:</label>
+                        <input type="text" id="merchant" name="merchant" class="form-input">
+                    </div>
+                  
+                    <div class="mb-3">
+                        <label for="invoice_number" class="form-label">發票號碼:</label>
+                        <input type="text" id="invoice_number" name="invoice_number" class="form-input">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="amount" class="form-label">金額:</label>
+                        <div class="input-group">
+                            <input type="number" id="amount" name="amount" class="form-input" required>
+                        </div>
+                    </div>
+                  
+                    <div class="mb-3">
+                        <label for="notes" class="form-label">註記:</label>
+                        <textarea id="notes" name="notes" class="form-input" rows="4"></textarea>
+                    </div>
+                  
+                    <!-- <button type="submit" class="btn-custom form-btn" onclick="submitFinForm(event)">提交</button> -->
                 </form>
+               
                 <form id="assetForm" class="form-content" style="display: none;">
                     <div class="mb-3">
                         <label class="form-label">日期:</label>
@@ -320,9 +354,15 @@
                         <label class="form-label">投資金額:</label>
                         <input type="number" class="form-control" id="inventValue" required>
                     </div>
-                    <button type="submit" class="btn-custom form-btn" onclick="submitStockForm(event)">提交</button>
+                    <!-- <button type="submit" class="btn-custom form-btn" onclick="submitStockForm(event)">提交</button> -->
                 </form>
             </div>
+
+            <div class="fixed-action-buttons">
+                <button type="button" id="submitAccountBtn" class="btn-custom fixed-submit-btn" style="display: none;" onclick="submitFinForm(event)">提交記帳</button>
+                <button type="button" id="submitAssetBtn" class="btn-custom fixed-submit-btn" style="display: none;" onclick="submitStockForm(event)">提交資產</button>
+            </div>
+
         </section>
 
     </main>

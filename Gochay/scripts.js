@@ -5,8 +5,8 @@ const initialLoad = 15;   // 初始載入記錄數量
 let currentPage = 1;      // 當前頁碼
 let isLoading = false;    // 是否正在載入
 let hasMore = true;       // 是否還有更多數據
-const API_BASE_URL = 'https://web-firestore-453815.de.r.appspot.com/api'; // Flask API 基礎 URL
-// const API_BASE_URL = 'http://127.0.0.1:8080/api'
+// const API_BASE_URL = 'https://web-firestore-453815.de.r.appspot.com/api'; // Flask API 基礎 URL
+const API_BASE_URL = 'http://127.0.0.1:8080/api'
 const POST_API_BASE_URL = 'https://postflask-dot-web-firestore-453815.de.r.appspot.com/api'; // 處理貼文功能伺服器
 // const POST_API_BASE_URL = 'http://127.0.0.1:5000/api'; // 處理貼文功能伺服器
 
@@ -255,7 +255,13 @@ async function initLoginModal() {
     try {
         const response = await fetch(`${API_BASE_URL}/accounts`);
         if (!response.ok) throw new Error('載入帳戶失敗');
-        const accounts = await response.json();
+        const response_data = await response.json();
+        var accounts = [];
+        for(let i = 0; i < response_data.length; i++){
+            if(response_data[i] != null){
+                accounts.push(response_data[i]);
+            }
+        }
         renderAccountOptions(accounts, 'loginAccountList', '<option value="" disabled selected>請選擇帳戶</option>');
     } catch (error) {
         console.error('載入帳戶失敗:', error);
@@ -398,36 +404,41 @@ function initDate() {
 // 提交記帳表單
 async function submitFinForm(e) {
     e.preventDefault();
-    const form = domCache.accountForm;
+    const form = document.getElementById('accountForm'); // Ensure correct ID
     if (!form.checkValidity()) {
         form.reportValidity();
         return;
     }
+  
     const formData = {
         date: document.getElementById('inputDate1').value,
-        items: document.getElementById('items1').value,
-        person: document.getElementById('accountList2').value,
-        property: document.getElementById('property1').value,
-        isIncome: document.getElementById('isIncome1').value,
-        amounts: parseFloat(document.getElementById('amounts1').value)
+        items: document.getElementById('items').value,
+        category: document.getElementById('category').value,
+        transactionType: document.getElementById('transactionType').value,
+        amount: parseFloat(document.getElementById('amount').value),
+        payment_method: document.getElementById('payment_method').value,
+        merchant: document.getElementById('merchant').value,
+        invoice_number: document.getElementById('invoice_number').value,
+        notes: document.getElementById('notes').value,
     };
+  
     try {
-        const response = await fetch(`${API_BASE_URL}/submitAccount/${formData.person}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(formData)
-        });
-        if (!response.ok) throw new Error('提交失敗');
-        domCache.accountForm.reset();
-        initDate();
-        alert('記帳提交成功！');
+        const response = await fetch(`${API_BASE_URL}/submitAccount/${current_account}`, { // Use current_account (global variable)
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+    });
+  
+    if (!response.ok) throw new Error('提交失敗');
+  
+        form.reset();
+        alert('Account data submitted successfully!');
+  
     } catch (error) {
-        console.error('提交失敗:', error);
-        alert('提交失敗，請稍後再試');
+        console.error('Error submitting account data:', error);
+        alert('Failed to submit account data. Please try again.');
     }
-    
 }
-
 // 提交資產表單
 async function submitStockForm(e) {
     e.preventDefault();
@@ -479,9 +490,14 @@ async function loadAccounts() {
     try {
         const response = await fetch(`${API_BASE_URL}/accounts`);
         if (!response.ok) throw new Error('載入帳戶失敗');
-        const accounts = await response.json();
+        const reponse_data = await response.json();
+        var accounts = [];
+        for(let i = 0; i < reponse_data.length; i++){
+            if(reponse_data[i] != null){
+                accounts.push(reponse_data[i]);
+            }
+        }
         renderAccountOptions(accounts, 'accountList', '<option value="NaN">顯示全部</option>');
-        renderAccountOptions(accounts, 'accountList2', '<option value="" disabled selected>選擇帳戶</option>');
         renderAccountOptions(accounts, 'accountList3', '<option value="" disabled selected>選擇帳戶</option>');
         renderAccountOptions(accounts, 'accountList-title', '<option value="select-account" disabled selected>切換帳戶</option>');
     } catch (error) {
@@ -580,7 +596,7 @@ function renderDailyExpenses(expenses, todayExpenses) {
     totalCard.className = 'record-card total-card';
     totalCard.innerHTML = `
         <div class="record-item">
-            <span>當天開銷總額</span>
+            <span>開銷項目</span>
             <span class="expense-amount">NT$${formatNumber(todayExpenses)}</span>
         </div>
     `;
@@ -589,15 +605,15 @@ function renderDailyExpenses(expenses, todayExpenses) {
     // 添加每筆開銷項目
     expenses.forEach(expense => {
         const card = document.createElement('div');
-        card.className = `record-card ${expense.TransactionType === '收入' ? 'income-card' : 'expense-card'}`;
+        card.className = `record-card ${expense.transactionType === '收入' ? 'income-card' : 'expense-card'}`;
         const amountClass = expense.TransactionType === '收入' ? 'income-amount' : 'expense-amount';
         card.innerHTML = `
             <div class="record-header">
                 <span>${expense.date || ''}</span>
             </div>
             <div class="record-item">
-                <span>${expense.Item || ''}</span>
-                <span class="${amountClass}">NT$${formatNumber(expense.Amount || 0)}</span>
+                <span>${expense.item || ''}</span>
+                <span class="${amountClass}">NT$${formatNumber(expense.amount || 0)}</span>
             </div>
         `;
         fragment.appendChild(card);
@@ -613,42 +629,85 @@ function switchDataView(viewType) {
     domCache.assetsDataView.style.display = viewType === 'assets' ? 'block' : 'none';
     domCache.showStocksBtn.classList.toggle('active', viewType === 'stocks');
     domCache.showAssetsBtn.classList.toggle('active', viewType === 'assets');
-
+    const stocksViewContainer = document.getElementById('stocksDataView').querySelector('.stock-cards-area'); // Target the inner area
+    const assetsViewContainer = document.getElementById('assetsDataView'); // Target the asset container (assuming it doesn't have the header)
     if (current_account) {
         if (viewType === 'stocks') {
+            stocksViewContainer.innerHTML = ''; // Clear only the card area
             renderStockCardsForAccount(current_account);
         } else if (viewType === 'assets') {
+            assetsViewContainer.innerHTML = ''; // Clear asset area
             renderAssetCardsForAccount(current_account);
         }
     } else {
-        domCache[viewType === 'stocks' ? 'stocksDataView' : 'assetsDataView'].innerHTML = '<p class="no-account-message">尚未切換帳戶，請先切換</p>';
+        // Display 'no account' message in the correct container
+        if (viewType === 'stocks') {
+            if (stocksViewContainer) { // Check if the container exists
+                 stocksViewContainer.innerHTML = '<p class="no-account-message">尚未切換帳戶，請先切換</p>';
+            }
+             document.querySelector('.stock-list-header').style.display = 'none'; // Hide header if no account
+        } else {
+            if (assetsViewContainer) { // Check if the container exists
+                 assetsViewContainer.innerHTML = '<p class="no-account-message">尚未切換帳戶，請先切換</p>';
+            }
+        }
     }
 }
 
 // 為指定帳戶渲染持股卡片
 //修改 renderStockCardsForAccount 函數，將資料渲染到 stocksDataView
+// async function renderStockCardsForAccount(account) {
+//     try {
+//         const response = await fetch(`${API_BASE_URL}/stocks/${account}`);
+//         if (!response.ok) throw new Error('載入股票數據失敗');
+//         const data = await response.json();
+//         renderStockCards(data, domCache.stocksDataView);
+//     } catch (error) {
+//         console.error('載入股票數據失敗:', error);
+//         domCache.stocksDataView.innerHTML = '<p class="no-account-message">載入失敗，請稍後重試</p>';
+//     }
+// }
+
 async function renderStockCardsForAccount(account) {
+    const container = document.getElementById('stocksDataView').querySelector('.stock-cards-area'); // Target the inner area
+    const header = document.querySelector('.stock-list-header'); // Get the header
+    const summaryElement = document.getElementById('controlBarSummary'); // Get summary element
+    if (!container || !header) {
+        console.error("Stock card area or header not found!");
+        return;
+    }
+    container.innerHTML = '<p class="no-account-message">載入中...</p>'; // Loading message
+    header.style.display = 'none'; // Hide header during load
+
     try {
         const response = await fetch(`${API_BASE_URL}/stocks/${account}`);
         if (!response.ok) throw new Error('載入股票數據失敗');
         const data = await response.json();
-        renderStockCards(data, domCache.stocksDataView);
+        const totalStocksValue = renderStockCards(data, container); // Render into the specific area
+        summaryElement.textContent = `總金額: NT$ ${formatNumber(totalStocksValue.toFixed(0))}`;
+         // Show header only if there is data
+        header.style.display = (data && data.length > 0) ? 'grid' : 'none';
     } catch (error) {
         console.error('載入股票數據失敗:', error);
-        domCache.stocksDataView.innerHTML = '<p class="no-account-message">載入失敗，請稍後重試</p>';
+        container.innerHTML = '<p class="no-account-message">載入失敗，請稍後重試</p>';
+        summaryElement.textContent = '總金額: -'; // Show error in summary
+        header.style.display = 'none'; // Hide header on error
     }
 }
-
 // 新增 renderAssetCardsForAccount 函數，將資料渲染到 assetsDataView
 async function renderAssetCardsForAccount(account) {
+    const summaryElement = document.getElementById('controlBarSummary'); // Get summary element
     try {
         const response = await fetch(`${API_BASE_URL}/assets/${account}`);
         if (!response.ok) throw new Error('載入現金數據失敗');
         const data = await response.json();
-        renderAssetCards(data, domCache.assetsDataView);
+        console.log(data);
+        const totalAssetsValue = renderAssetCards(data, domCache.assetsDataView);
+        summaryElement.textContent = `總金額: NT$ ${formatNumber(totalAssetsValue.toFixed(0))}`; // Update summary with total assets value
     } catch (error) {
         console.error('載入現金數據失敗:', error);
         domCache.assetsDataView.innerHTML = '<p class="no-account-message">載入失敗，請稍後重試</p>';
+        summaryElement.textContent = '總金額: -'; // Show error in summary
     }
 }
 
@@ -665,68 +724,148 @@ async function renderAssetCardsForAccount(account) {
   price:[7]
 */
 // 修改 renderStockCards 函數，將資料渲染到指定的容器
-function renderStockCards(stockDatas, container) {
-    container.innerHTML = '';
+// function renderStockCards(stockDatas, container) {
+//     container.innerHTML = ''; // 清空現有內容
+//     if (!stockDatas || stockDatas.length === 0) {
+//         container.innerHTML = '<p class="no-account-message" style="grid-column: 1 / -1;">無持股資料</p>'; // 讓提示橫跨所有列
+//         return;
+//     }
+
+//     const fragment = document.createDocumentFragment();
+
+//     stockDatas.forEach(stockData => {
+//         const currentValue = parseFloat(stockData.current_amount || 0);
+//         const acquisitionValue = parseFloat(stockData.acquisition_value || 0);
+//         const quantity = parseFloat(stockData.quantity || 0);
+//         const change = currentValue - acquisitionValue;
+//         const changePercent = acquisitionValue !== 0 ? (change / acquisitionValue) * 100 : 0; // 計算百分比
+
+//         const changeClass = change > 0 ? 'positive' : change < 0 ? 'negative' : 'neutral';
+//         const arrow = change > 0 ? '▲' : change < 0 ? '▼' : '';
+
+//         const card = document.createElement('div');
+//         card.className = 'stock-card'; // 保持主 class
+//         // 使用新的內部結構
+//         card.innerHTML = `
+//             <div class="stock-card-content">
+//                 <div class="stock-main-info">
+//                     <span class="stock-item-name">${stockData.item}</span>
+//                     <span class="stock-current-value ${changeClass}">NT$ ${formatNumber(currentValue.toFixed(0))}</span>
+//                 </div>
+//                 <div class="stock-details">
+//                     <span class="stock-quantity">${formatNumber(quantity)} 股</span>
+//                     <span class="stock-profit-loss ${changeClass}">
+//                         <span class="arrow">${arrow}</span>
+//                         ${formatNumber(Math.abs(change).toFixed(0))} (${changePercent.toFixed(1)}%)
+//                     </span>
+//                 </div>
+//             </div>
+//             <div class="stock-actions">
+//                  <button class="btn-buy" onclick="buyStock('${stockData.item}', event)">買入</button>
+//                  <button class="btn-sell" onclick="sellStock('${stockData.item}', ${quantity}, event)">賣出</button>
+//             </div>
+//         `;
+//         // 點擊卡片（非按鈕區域）展開/收起操作按鈕
+//         card.addEventListener('click', (e) => {
+//             // 檢查點擊的是否是按鈕本身，如果是則不觸發卡片展開/收起
+//             if (e.target.closest('.btn-buy') || e.target.closest('.btn-sell')) {
+//                 return;
+//             }
+//             card.classList.toggle('active');
+//         });
+//         fragment.appendChild(card);
+//     });
+
+//     container.appendChild(fragment);
+// }
+function renderStockCards(stockDatas, container) { // container is .stock-cards-area
+    container.innerHTML = ''; // Clear previous content
+    let totalValue = 0; // Initialize summary amount
+    if (!stockDatas || stockDatas.length === 0) {
+        container.innerHTML = '<p class="no-account-message" style="grid-column: 1 / -1;">無持股資料</p>';
+        return summary_amount;
+    }
+
     const fragment = document.createDocumentFragment();
 
     stockDatas.forEach(stockData => {
-        const change = stockData.CurrentValue - stockData.InitialAmount;
-        const changeClass = change > 0 ? 'positive' : change < 0 ? 'negative' : 'neutral';
-        const arrow = change > 0 ? '▲' : change < 0 ? '▼' : '';
-        const card = document.createElement('div');
-        card.className = 'stock-card';
-        card.innerHTML = `
-            <div class="stock-header">
-                <span class="stock-item">${stockData.Item}</span>
-                <span class="stock-price ${changeClass}">${parseFloat(stockData.CurrentValue).toFixed(0)}</span>
-            </div>
-            <div class="stock-info">
-                <span>${formatNumber(stockData.Quantity)}股</span>
-                <span class="stock-change ${changeClass}">
-                    <span class="arrow">${arrow}</span>
-                    <span>${Math.abs(change).toFixed(1)}</span>
-                </span>
-            </div>
-            <div class="stock-actions">
-                <button class="btn-buy" onclick="buyStock('${stockData.Item}', event)">BUY</button>
-                <button class="btn-sell" onclick="sellStock('${stockData.Item}', ${stockData.Quantity}, event)">SELL</button>
-            </div>
-        `;
-        card.addEventListener('click', (e) => {
-            if (e.target.tagName === 'BUTTON') return;
-            card.classList.toggle('active');
-        });
-        fragment.appendChild(card);
+        if (stockData.quantity > 0){
+
+            const currentValue = parseFloat(stockData.current_amount || 0);
+            const acquisitionValue = parseFloat(stockData.acquisition_value || 0);
+            const quantity = parseFloat(stockData.quantity || 0);
+            const change = currentValue - acquisitionValue;
+            const changePercent = acquisitionValue !== 0 ? (change / acquisitionValue) * 100 : 0;
+            const changeClass = change > 0 ? 'positive' : change < 0 ? 'negative' : 'neutral';
+            const arrow = change > 0 ? '▲' : change < 0 ? '▼' : '';
+
+            totalValue += currentValue; // Add to total value
+            const card = document.createElement('div');
+            card.className = 'stock-card';
+            // *** 修改此處 innerHTML ***
+            card.innerHTML = `
+                <div class="stock-card-content single-row"> 
+                    <span class="sc-item-name">${stockData.item}</span>
+                    <span class="sc-quantity">${formatNumber(quantity)}</span>
+                    <span class="sc-current-value ${changeClass}">$${formatNumber(parseInt(currentValue))}</span>
+                    <span class="sc-profit-loss ${changeClass}">
+                    <span class="arrow">${arrow}</span>${formatNumber(Math.abs(change).toFixed(0))}(${changePercent.toFixed(1)}%)
+                    </span>
+                </div>
+                <div class="stock-actions">
+                    <button class="btn-buy" onclick="buyStock('${stockData.item}', event)">買入</button>
+                    <button class="btn-sell" onclick="sellStock('${stockData.item}', ${quantity}, event)">賣出</button>
+                </div>
+            `;
+            // *** HTML 修改結束 ***
+
+            card.addEventListener('click', (e) => {
+                if (e.target.closest('.btn-buy') || e.target.closest('.btn-sell')) {
+                    return;
+                }
+                card.classList.toggle('active');
+            });
+            fragment.appendChild(card);
+        }
+        
     });
 
     container.appendChild(fragment);
+    return totalValue; // Return the calculated total
 }
-
 // 渲染現金卡片
 function renderAssetCards(assetDatas, container) {
     // console.log(assetDatas);
     container.innerHTML = '';
+    let totalValue = 0; // Initialize total value
+
+    if (!assetDatas || assetDatas.length === 0) {
+        container.innerHTML = '<p class="no-account-message">無現金資料</p>';
+         return totalValue; // Return 0 if no data
+    }
+
     const fragment = document.createDocumentFragment();
 
     assetDatas.forEach(assetData => {
-        if(assetData.InitialAmount > 0){
+        if(assetData.acquisition_value > 0){
+            totalValue += assetData.current_amount; // Add to total value
             const card = document.createElement('div');
             card.className = 'assetItem-card';
-            const assetTypeIcon = getAssetTypeIcon(assetData.Type);
-            const formattedDate = formatDateForDisplay(assetData.date);
+            const assetTypeIcon = getAssetTypeIcon(assetData.asset_type);
+            const formattedDate = formatDateForDisplay(assetData.acquisition_date);
             card.innerHTML = `
                 <div class="assetItem-card-inner">
                     <div class="assetItem-header">
                         <div class="assetItem-header-left">
                             <span class="assetItem-type-icon">${assetTypeIcon}</span>
-                            <span class="assetItem-item">${assetData.Item}</span>
+                            <span class="assetItem-item">${assetData.item}</span>
                         </div>
-                        <span class="assetItem-price">NT$${parseInt(assetData.InitialAmount)}</span>
+                        <span class="assetItem-price">NT$${parseInt(assetData.acquisition_value)}</span>
                     </div>
                     <div class="assetItem-details">
                         <div class="assetItem-info">
                             <span class="assetItem-date">${formattedDate}</span>
-                            <span class="assetItem-type">${assetData.Type}</span>
+                            <span class="assetItem-type">${assetData.asset_type}</span>
                         </div>
                         <div class="assetItem-actions">
                             <button class="btn-record" onclick="openRecordModal('${assetData.id}')">
@@ -743,6 +882,7 @@ function renderAssetCards(assetDatas, container) {
     });
 
     container.appendChild(fragment);
+    return totalValue; // Return calculated total
 }
 
 // 根據資產類型返回合適的圖標
@@ -881,8 +1021,8 @@ function displayRecords(records, hasmore) {
     const fragment = document.createDocumentFragment();
     records.forEach(record => {
         const card = document.createElement('div');
-        card.className = `record-card ${record.type === '收入' ? 'income-card' : 'expense-card'}`;
-        const amountClass = record.type === '收入' ? 'income-amount' : 'expense-amount';
+        card.className = `record-card ${record.transactionType === '收入' ? 'income-card' : 'expense-card'}`;
+        const amountClass = record.transactionType === '收入' ? 'income-amount' : 'expense-amount';
         card.innerHTML = `
             <div class="record-header">
                 <span>${record.date || ''}</span>
@@ -1013,6 +1153,10 @@ function setupOptionCards() {
         return;
     }
 
+    // get submit buttons elements
+    const submitAccountBtn = document.getElementById('submitAccountBtn');
+    const submitAssetBtn = document.getElementById('submitAssetBtn');
+
     optionContainer.addEventListener('click', e => {
         const card = e.target.closest('.option-card');
         if (!card) {
@@ -1034,15 +1178,35 @@ function setupOptionCards() {
         if (formId === 'accountForm') {
             accountForm.style.display = 'block';
             assetForm.style.display = 'none';
+            submitAccountBtn.style.display = 'block'; // 顯示記帳提交按鈕
+            submitAssetBtn.style.display = 'none';  // 隱藏資產提交按鈕
             console.log('顯示記帳表單');
         } else if (formId === 'assetForm') {
             assetForm.style.display = 'block';
             accountForm.style.display = 'none';
+            submitAccountBtn.style.display = 'none'; // 顯示記帳提交按鈕
+            submitAssetBtn.style.display = 'block';  // 隱藏資產提交按鈕
             console.log('顯示資產表單');
         } else {
+            submitAccountBtn.style.display = 'none'; // 顯示記帳提交按鈕
+            submitAssetBtn.style.display = 'none';  // 隱藏資產提交按鈕
             console.error('無效的 formId:', formId);
         }
+
+        
     });
+
+    if (accountForm.style.display !== 'none') {
+        submitAccountBtn.style.display = 'block';
+        submitAssetBtn.style.display = 'none';
+    } else if (assetForm.style.display !== 'none') {
+        submitAssetBtn.style.display = 'block';
+        submitAccountBtn.style.display = 'none';
+    } else {
+        // 都隱藏
+        submitAccountBtn.style.display = 'none';
+        submitAssetBtn.style.display = 'none';
+    }
 }
 
 // 節流函數，限制事件觸發頻率
@@ -1377,7 +1541,7 @@ async function updateHomePage(account) {
     if (existingMessage) existingMessage.remove();
 
     try {
-        const response = await fetch(`${API_BASE_URL}/getSummaryDate/${account}`);
+        const response = await fetch(`${API_BASE_URL}/getSummaryData/${account}`);
         if (!response.ok) throw new Error('載入當天數據失敗');
         const historyData = await response.json();
 
@@ -1418,7 +1582,7 @@ async function updateHomePage(account) {
     }
 }
 
-// // 初始化 AI 助手留言板
+// 初始化 AI 助手留言板
 // function initAIAssistant() {
 //     const aiMessages = document.getElementById('aiMessages');
 //     if (!aiMessages) {

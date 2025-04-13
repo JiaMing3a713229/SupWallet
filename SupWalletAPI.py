@@ -4,52 +4,51 @@ from firebase_admin import firestore
 from datetime import datetime
 import pandas as pd
 from flask import Flask, request, jsonify
-
-# Expense 
-    # attribute
-        # Amount
-        # Category
-        # Item
-        # TransactionType
-        # date
-        # id, automatically generator
 class Expenses:
-    def __init__(self, user_id, date, item, amount, transactionType, category):
-        self.user_id = user_id
+    """
+    表示消費記錄的類別。
+    """
+    def __init__(self, date = None, item=None, amount=None, payment_method=None, category=None,
+                 merchant=None,notes=None, invoice_number=None):
+        """
+        初始化 Expenses 類別。
+
+        Args:
+            date (str): 消費日期。
+            item (str): 消費項目。
+            amount (float): 消費金額。
+            payment_method (str): 支付方式。
+            category (str): 消費類別。
+            merchant (str, 可選): 商店名稱。
+            notes (str, 可選): 消費備註。
+            invoice_number (str, 可選): 發票號碼。
+        """
         self.date = date
         self.item = item
         self.amount = amount
-        self.transactionType = transactionType
+        self.payment_method = payment_method
         self.category = category
-        self.data = {
+        self.merchant = merchant
+        self.notes = notes
+        self.invoice_number = invoice_number
+    
+        self.expense_dict = {
             "date": self.date,
-            "Item": self.item,
-            "Amount": self.amount,
-            "TransactionType": self.transactionType,
-            "Category": self.category,
+            "item": self.item,
+            "amount": self.amount,
+            "payment_method": self.payment_method,
+            "category": self.category,
         }
+        # 選擇性地加入其他欄位
+        if self.merchant:
+            expense_dir["merchant"] = self.merchant
+        if self.notes:
+            expense_dir["notes"] = self.notes
+        if self.invoice_number:
+            expense_dir["invoice_number"] = slef.invoice_number
 
     def __str__(self):
-        """返回物件的字串表示形式"""
-        return f"Expenses(user_id={self.user_id}, date={self.date}, item={self.item}, amount={self.amount}, transactionType={self.transactionType}, category={self.category})"
-
-
-class Assets:
-    def __init__(self, user_id, date, item, quantity, initialAmount, asset_type):
-        self.user_id = user_id
-        self.date = date
-        self.item = item
-        self.quantity = quantity
-        self.initialAmount = initialAmount
-        self.asset_type = asset_type
-        self.data = {
-            "date": self.date,
-            "Item": self.item,
-            "Quantity": self.quantity,
-            "InitialAmount": self.initialAmount,
-            "Type": self.asset_type
-        }
-
+        return f'expenses:' + self.expense_dict
 
 
 class SupWallet:
@@ -260,8 +259,8 @@ class SupWallet:
         ret = self.getDataFromFireStore(user_id, "assets", tar_id)
         return ret
     def getAssetAllData(self, user_id):
-        ref = self.db.collection(self.database).document(user_id).collection("assets")
-        docs = ref.stream()
+        ref = self.db.collection(self.database).document(user_id).collection("assets") 
+        docs = ref.stream() #return a dict
         data = []
         for doc in docs:
             data.append(doc.to_dict())
