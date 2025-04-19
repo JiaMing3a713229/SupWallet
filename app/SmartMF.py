@@ -1,6 +1,5 @@
 import firebase_admin
-from firebase_admin import credentials
-from firebase_admin import firestore
+from firebase_admin import credentials, firestore, auth
 from datetime import datetime, timedelta
 import pandas as pd
 from typing import Dict, List, Optional, Union, Any
@@ -397,7 +396,7 @@ class SmartMF:
         "assetType": {
             "assets": {
                 "current_assets": ["活期存款", "定期存款", "現金", "虛擬貨幣"],
-                "fixed_assets": ["債券", "金融股", "市值ETF", "高股息ETF"],
+                "fixed_assets": ["債券", "金融股", "股票", "市值ETF", "高股息ETF"],
             },
             "liabilities": [
                 "信用卡",
@@ -483,12 +482,12 @@ class SmartMF:
                         "current_price" : data.get("CurrentPrice", -1),
                         "id" : data.get("id", ""),
                     }
-                    if upload_data['asset_type'] == '活存':
-                        upload_data['asset_type'] = '活期存款'
-                    elif upload_data['asset_type'] == '定存':
-                        upload_data['asset_type'] = '定期存款'
+                    if upload_data['category'] == '活存':
+                        upload_data['category'] = '活期存款'
+                    elif upload_data['category'] == '定存':
+                        upload_data['category'] = '定期存款'
 
-                self.firestore_client.add_document(collection_path, upload_data, str(upload_data.get("id")))
+                self.firestore_client.add_document(collection_path, upload_data, str(data.get("id")))
                 print(f"{data.get('id')}: {upload_data}")
 
 
@@ -519,54 +518,120 @@ class SmartMF:
     def _get_relation_collection_path(self, user_id: str) -> str:
         """Returns the path to the relationship subcollection for a given user."""
         return f"UserDB/{user_id}/relationship"
+    
+    def _get_stock_collection_path(self):
+        """Returns the path to the stock collection."""
+        return "StockDB"
 
-    def _get_stock_collection_path(self) -> str:
-        return f"Stocks"
-
-    def add_user(self, user_id: str, user_data: Optional[Dict[str, Any]] = None) -> Optional[str]:
+    def add_user_profile(self, uid: str, email: str, username: Optional[str] = None, user_data: Optional[Dict[str, Any]] = None) -> bool:
         """
-        Adds a new user to Firestore.
-
+        Creates a user profile document in Firestore after successful Firebase Auth registration.
+        The document ID will be the Firebase Auth UID.
 
         Args:
-            user_id: The unique ID of the user.
-            user_data: (Optional) A dictionary containing user data.
-
-
+            uid: The Firebase Auth User ID.
+            email: The user's email.
+            username: The user's chosen display name (can be same as uid initially if not provided).
+            user_data: Optional additional user data.
         Returns:
-            The ID of the newly added user, or None if the user already exists.
+            True if the profile document was created or already exists, False otherwise.
         """
         collection_path = self._get_users_collection_path()
-        user_ref = self.firestore_client.get_document_reference(collection_path, user_id)
-
+        user_ref = self.firestore_client.get_document_reference(collection_path, uid) # 使用 uid 作為文件 ID
 
         if user_ref.get().exists:
-            print(f"User '{user_id}' already exists, cannot add.")
-            self.firestore_client.add_document(self._get_options_collection_path(user_id), self.optionType, "options")
-            return None
+            print(f"User profile for UID '{uid}' already exists in Firestore.")
+            # 可以選擇在這裡更新資料，或者直接返回 True
+            # 例如: self.firestore_client.update_document(collection_path, uid, {"last_seen": datetime.now().isoformat()})
+            return True # 或者根據需求決定是否算成功
 
+        # 準備要儲存到 Firestore 的基本資料 (不再儲存密碼 hash)
+        profile_data = {
+            # 如果沒有提供 username，可以用 email 前綴或 uid 作為預設值
+            "username": username if username else uid,
+            "email": email,
+            "created_at": datetime.now().isoformat(),
+            "access": 0, # 預設權限
+            # 可以加入其他預設欄位，例如空的設定檔連結、頭像 URL 等
+        }
 
-        if user_data is None:
-            user_data = {
-                "created_at": datetime.now().isoformat(),
-                "email": "",
-                "username": user_id,
-                "password": "",
-                "access": 0,
-            }
+        if isinstance(user_data, dict):
+            profile_data.update(user_data)
+
+        # 在 Firestore 中建立文件，使用 uid 作為 ID
+        added_id = self.firestore_client.add_document(collection_path, profile_data, uid)
+
+        if added_id == uid:
+            # 為新用戶建立必要的子集合
+            try:
+                self.firestore_client.add_document(self._get_options_collection_path(uid), self.optionType, "options")
+                self.firestore_client.add_document(self._get_relation_collection_path(uid), {}, "relationship")
+                print(f"Successfully created Firestore profile for user UID '{uid}'")
+                return True
+            except Exception as e:
+                print(f"Warning: Failed to create subcollections for user {uid}: {e}")
+                # 主 profile 文件已建立，可能仍算成功
+                return True
         else:
-            if not isinstance(user_data, dict):
-                raise ValueError("user_data must be a dictionary")
-            user_data["created_at"] = datetime.now().isoformat()
+            print(f"Failed to create Firestore profile for user UID '{uid}'")
+            return False
+        
+    # def add_user(self, user_id: str, user_data: Optional[Dict[str, Any]] = None) -> Optional[str]:
+    #     """
+    #     Adds a new user to Firestore.
+
+
+    #     Args:
+    #         user_id: The unique ID of the user.
+    #         user_data: (Optional) A dictionary containing user data.
+
+
+    #     Returns:
+    #         The ID of the newly added user, or None if the user already exists.
+    #     """
+    #     collection_path = self._get_users_collection_path()
+    #     user_ref = self.firestore_client.get_document_reference(collection_path, user_id)
+
+
+    #     if user_ref.get().exists:
+    #         print(f"User '{user_id}' already exists, cannot add.")
+    #         self.firestore_client.add_document(self._get_options_collection_path(user_id), self.optionType, "options")
+    #         return None
+
+
+    #     if user_data is None:
+    #         user_data = {
+    #             "created_at": datetime.now().isoformat(),
+    #             "email": "",
+    #             "username": user_id,
+    #             "password": "",
+    #             "access": 0,
+    #         }
+    #     else:
+    #         if not isinstance(user_data, dict):
+    #             raise ValueError("user_data must be a dictionary")
+    #         user_data["created_at"] = datetime.now().isoformat()
 
         
-        self.firestore_client.add_document(collection_path, user_data, user_id)
-        self.firestore_client.add_document(self._get_options_collection_path(user_id), self.optionType, "options")
-        self.firestore_client.add_document(self._get_relation_collection_path(user_id), {}, "relationship")
-        print(f"Successfully added user '{user_id}'")
-        return user_id
+    #     self.firestore_client.add_document(collection_path, user_data, user_id)
+    #     self.firestore_client.add_document(self._get_options_collection_path(user_id), self.optionType, "options")
+    #     self.firestore_client.add_document(self._get_relation_collection_path(user_id), {}, "relationship")
+    #     print(f"Successfully added user '{user_id}'")
+    #     return user_id
 
-
+    def get_user_details(self, uid: str) -> Optional[Dict[str, Any]]:
+         """Retrieves user details from Firestore using Firebase UID."""
+         collection_path = self._get_users_collection_path()
+         user_data = self.firestore_client.get_document(collection_path, uid) # 使用 uid 查詢
+         # user_data 字典裡原本就沒有 password_hash 了
+         return user_data
+    def get_all_user_profiles_uids(self) -> List[str]:
+         uids = []
+         collection_path = self._get_users_collection_path()
+         docs = self.firestore_client.get_collection(collection_path)
+         uids = [doc.id for doc in docs if doc.id is not None]
+         return uids
+    
     def get_all_users(self) -> List[str]:
         """
         Retrieves all user IDs.
@@ -1055,13 +1120,13 @@ class SmartMF:
         else:
             asset_data = asset
 
-
+        asset_data["id"] = next_id  # Add the ID to the asset data
         return self.firestore_client.add_document(
             self._get_assets_collection_path(user_id), 
             asset_data,
             document_id= str(next_id)
         )
-    
+
     def add_stocks_to_List(self, stock: Union[Asset, Dict[str, Any]]) -> Optional[str]:
         print(f"Adding asset: {stock.get('item')}")
         self.firestore_client.add_document(
@@ -1074,13 +1139,24 @@ class SmartMF:
         )
         # Check if the asset already exists in the collection
         asset_ref = self.firestore_client.get_document_reference(self._get_stock_collection_path(), str(stock.get("item")))
-        if asset_ref.get().exists:
-            print(f"Asset '{stock.get('item')}' already exists, cannot add.")
-            return None
-        else:
-            print(f"Adding asset '{stock.get('item')}' to Firestore failed.")
+
+    def get_stockDB(self) -> List[Dict[str, Any]]:
+        """
+        Retrieves all asset records for a user.
 
 
+        Args:
+            user_id: The ID of the user.
+
+
+        Returns:
+            A list of dictionaries, where each dictionary represents an asset.
+        """
+        collection_docs = self.firestore_client.get_collection(self._get_stock_collection_path())
+        assets_list = [doc.to_dict() for doc in collection_docs]
+
+        return assets_list
+    
     def update_asset(
         self,
         user_id: str,
@@ -1164,41 +1240,40 @@ class SmartMF:
         assets_list = [doc.to_dict() for doc in collection_docs]
 
         return assets_list
-    
-    def updateAllStock(self):
         
-        stock_ref = self.firestore_client.get_collection(self._get_stock_collection_path())
-        stockList = [doc.to_dict()['item'] for doc in stock_ref]
-        for stock in stockList:
-            currentPrice = get_current_price(stock)
-            if currentPrice is not None:
-                doc_ref = self.firestore_client.get_document_reference(self._get_stock_collection_path(), stock)
-                update_data = {
-                    "current_price": currentPrice,
-                }
-                doc_ref.update(update_data)
-                print(f"Updated {stock} price to {currentPrice}")
-            else:
-                print(f"Failed to update {stock} price")
+    def updateStockDB(self) -> bool:
+        exist_stocks = self.get_stockDB()
+        for stock in exist_stocks:
+            current_price = get_current_price(stock.get("item"))
+            self.firestore_client.update_document(
+                self._get_stock_collection_path(), str(stock.get("item")), {"current_price": current_price}
+            )
+            print(f"Updated {stock.get('item')} price to {current_price}")
 
-        
-    
+
     def updateStockPrice(self, user_id: str) -> bool:
         
-        ref = self.firestore_client.get_collection(self._get)
+        ref = self.firestore_client.get_collection(self._get_assets_collection_path(user_id))
         assetsList = [doc.to_dict() for doc in ref if doc.to_dict()['quantity'] >= 0]
+
+        stockDB_List = self.get_stockDB()
+        stocks_List = [stock.get('item') for stock in stockDB_List if stock.get("item") is not None]
         
         for doc in assetsList:
-            currentPrice = get_current_price(doc.get("item"))
-            currentAmount = currentPrice * doc["quantity"]
-            if currentPrice is not None:
-                doc_ref = self.firestore_client.get_document_reference(self._get_assets_collection_path(user_id), str(doc.get("id")))
-                update_data = {
-                    "current_price": currentPrice,
-                    "current_amount": currentAmount
-                }
-                doc_ref.update(update_data)
-                print(f"Updated {doc.get('item')} price to {currentPrice}")
-            else:
-                print(f"Failed to update {doc.get('item')} price")
+            # Check if the item is in the stock collection
+            if(doc.get("item") in stocks_List):
+                # update the current price
+                currentPrice = stockDB_List[stocks_List.index(doc.get("item"))].get("current_price")
+                print("update", {doc.get("item")} ,"current price:", currentPrice) 
+                currentAmount = currentPrice * doc["quantity"]
+                if currentPrice is not None:
+                    doc_ref = self.firestore_client.get_document_reference(self._get_assets_collection_path(user_id), str(doc.get("id")))
+                    update_data = {
+                        "current_price": currentPrice,
+                        "current_amount": currentAmount
+                    }
+                    doc_ref.update(update_data)
+                    print(f"Updated {doc.get('item')} price to {currentPrice}")
+                else:
+                    print(f"Failed to update {doc.get('item')} price")
                 

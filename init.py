@@ -28,14 +28,14 @@ if __name__ == "__main__":
     #     expenses_collection_path = f'UserDB/{i}/expenses'
     #     assets_collection_path = f'UserDB/{i}/assets'
     #     smart_mf.download_collection_to_csv(collection_path=expenses_collection_path, output_filename=f'{i}_expenses.csv')
-    #     smart_mf.download_collection_to_csv(collection_path=assets_collection_path, output_filename=f'{i}_assets.csv')
+        # smart_mf.download_collection_to_csv(collection_path=assets_collection_path, output_filename=f'{i}_assets.csv')
 
     # Upload the expenses CSV file to the collection
-    smart_mf.upload_csv_to_collection('Rhea_expenses.csv',
-                                    collection_path=smart_mf._get_expense_collection_path(user_id[1]),
-                                    collection_name="expenses")
+    smart_mf.upload_csv_to_collection('jiaMing_assets.csv',
+                                    collection_path=smart_mf._get_assets_collection_path('wc6cZoMQ6UZL8D12oiMNESZ6JQf2'),
+                                    collection_name="assets")
 
-    smart_mf.upload_csv_to_collection('Co-Found_expenses.csv',
-                                    collection_path=smart_mf._get_expense_collection_path('CH&Rhea'),
-                                    collection_name="expenses")
+    # smart_mf.upload_csv_to_collection('JiaMIng_expenses.csv',
+    #                                 collection_path=smart_mf._get_expense_collection_path('wc6cZoMQ6UZL8D12oiMNESZ6JQf2'),
+    #                                 collection_name="expenses")
    

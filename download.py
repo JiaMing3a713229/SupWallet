@@ -67,10 +67,10 @@ if __name__ == '__main__':
 
     # 測試匯出 expenses collection
     user_id = 'JiaMing'  # 替換為你的使用者 ID
-    expenses_collection_path = f'UserDB/{user_id}/expenses'
+    assets_collection_path = f'UserDB/{user_id}/assets'
     # result = export_firestore_collection_to_csv('expenses')
     # print(result)
 
     # 指定輸出的檔案名稱
-    result_with_filename = export_firestore_collection_to_csv(expenses_collection_path, 'jiaMIng_expenses.csv')
+    result_with_filename = export_firestore_collection_to_csv(assets_collection_path, 'jiaMing_assets.csv')
     print(result_with_filename)

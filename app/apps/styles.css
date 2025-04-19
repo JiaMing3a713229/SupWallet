@@ -1,0 +1,1948 @@
+:root {
+    --background: #f0f0f0; /* 更亮的淺灰色背景 */
+    --card-bg: #ffffff; /* 白色卡片背景 */
+    --text-primary: #333333; /* 深灰色文字 */
+    --text-secondary: #666666; /* 淺灰色文字 */
+    --primary: #4a90e2; /* 飽和的藍色 */
+    --secondary: #50e3c2; /* 飽和的青色 */
+    --success: #7ed321; /* 飽和的綠色 */
+    --danger: #ff6b6b; /* 飽和的紅色 */
+    --warning: #f8e71c; /* 飽和的黃色 */
+    --info: #4a90e2; /* 飽和的藍色 */
+}
+
+body {
+    font-family: 'Helvetica Neue', 'Arial', sans-serif;
+    font-weight: 500;
+    background: var(--background);
+    color: var(--text-primary);
+    margin: 0;
+    padding-bottom: calc(70px + env(safe-area-inset-bottom));
+    /* height: 100dvh; */
+    overflow: auto;
+}
+
+.no-account-message {
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: 1rem;
+    padding: 5px;
+}
+
+header.header-container {
+    background: var(--card-bg);
+    padding: 16px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    padding-top: env(safe-area-inset-top);
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    transition: transform 0.3s ease;
+}
+
+header.hidden {
+    transform: translateY(-100%);
+}
+
+.header-dropdown {
+    width: 130px;
+    max-width: 100%;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    padding: 4px;
+    text-align: center;
+    height: 35px;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 4px;
+    background: var(--card-bg);
+}
+
+.header-dropdown option {
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    text-align: center;
+}
+
+.main-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 3px;
+}
+
+.page {
+    display: none;
+}
+
+.page.active {
+    display: block;
+}
+
+.card-container, .table-container {
+    background: var(--card-bg);
+    border-radius: 8px;
+    padding: 3px;
+    margin: 1px 0;
+    /* border: 1px solid rgba(0, 0, 0, 0.1); */
+}
+
+.stock-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 10px; /* 增加卡片間距 */
+    padding: 5px; /* 容器內邊距 */
+}
+
+.stock-card{
+    background: var(--card-bg);
+    border-radius: 8px; /* 圓角 */
+    /* padding: 12px; */ /* 移除固定 padding，讓內部控制 */
+    border: 1px solid rgba(0, 0, 0, 0.08); /* 更細緻的邊框 */
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    display: flex; /* 改為 flex，方便內容和 actions 分開 */
+    flex-direction: column; /* 垂直排列 */
+    overflow: hidden; /* 確保內容不溢出 */
+    cursor: pointer; /* 保持可點擊提示 */
+}
+
+.stock-card:hover {
+    transform: translateY(-3px); /* 稍微明顯的 hover 效果 */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* 更明顯的陰影 */
+}
+
+.stock-header{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 1.1rem;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+}
+
+.stock-item{
+    font-size: 1.1rem;
+    font-weight: 400;
+    margin-bottom: 8px;
+}
+
+.stock-actions{
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    height: 0;
+    overflow: hidden;
+    transition: opacity 0.3s ease, height 0.3s ease;
+}
+
+.stock-card.active .stock-actions {
+    opacity: 1;
+    height: 50px;
+}
+
+.record-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    height: 0;
+    overflow: hidden;
+    transition: opacity 0.3s ease, height 0.3s ease;
+}
+
+.record-card.active .record-actions {
+    opacity: 1;
+    height: 45px;
+}
+
+.btn-custom.acc-btn {
+    padding: 8px 16px;
+    font-size: 0.9rem;
+    border-radius: 4px;
+}
+
+
+.btn-custom {
+    background: var(--primary);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 4px;
+    border: none;
+    font-size: 0.9rem;
+    font-weight: 400;
+    text-transform: uppercase;
+    transition: all 0.3s ease;
+}
+
+.btn-custom:hover {
+    transform: translateY(-2px);
+}
+
+.btn-buy {
+    background: var(--success);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 4px;
+    border: none;
+    font-size: 0.9rem;
+    font-weight: 400;
+    text-transform: uppercase;
+    transition: all 0.3s ease;
+}
+
+.btn-buy:hover {
+    background: #6bbd46;
+    transform: translateY(-1px);
+}
+
+.btn-sell {
+    background: var(--danger);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 4px;
+    border: none;
+    font-size: 0.9rem;
+    font-weight: 400;
+    text-transform: uppercase;
+    transition: all 0.3s ease;
+}
+
+.btn-sell:hover {
+    background: #ff4c4c;
+    transform: translateY(-1px);
+}
+
+.stock-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.stock-price {
+    font-size: 1.1rem;
+    font-weight: 400;
+}
+
+.stock-change {
+    font-size: 1rem;
+    font-weight: 400;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.arrow {
+    font-size: 1.2rem;
+}
+
+.positive { color: var(--success); }
+.negative { color: var(--danger); }
+.neutral { color: var(--text-secondary); }
+
+.form-control, .form-select {
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 4px;
+    padding: 8px;
+    transition: all 0.3s ease;
+    background: var(--card-bg);
+    color: var(--text-primary);
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
+}
+
+footer.nav-bar {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    background: var(--card-bg);
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    padding-bottom: env(safe-area-inset-bottom);
+    z-index: 1000;
+    transition: transform 0.3s ease;
+}
+
+footer.hidden {
+    transform: translateY(100%);
+}
+
+.nav-button {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 8px;
+    text-decoration: none;
+    background: transparent;
+    color: var(--text-secondary);
+    transition: all 0.3s ease;
+}
+
+.nav-button.active {
+    color: var(--primary);
+    background: rgba(74, 144, 226, 0.1);
+}
+
+.nav-button span {
+    font-size: 0.9rem;
+}
+
+.income-row { background-color: rgba(126, 211, 33, 0.1); }
+.expense-row { background-color: rgba(255, 107, 107, 0.1); }
+.income-amount { color: var(--success); }
+.expense-amount { color: var(--danger); }
+.amount-cell { font-weight: 400; text-align: right; }
+
+.option-container {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.option-card {
+    flex: 1;
+    background: var(--card-bg);
+    border-radius: 8px;
+    padding: 12px;
+    text-align: center;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.option-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.option-card h3 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 400;
+}
+
+.form-content {
+    margin-top: 16px;
+}
+
+.form-btn {
+    display: block;
+    margin: 0 auto;
+}
+
+.record-card-container {
+    margin-bottom: 3px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 2px;
+    padding: 3px;
+}
+
+.record-card {
+    background: var(--card-bg);
+    border-radius: 8px;
+    padding: 3px;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    height: auto;
+    min-height: 15px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    overflow: hidden;
+}
+
+.load-complete-card {
+    background: var(--card-bg);
+    border-radius: 8px;
+    padding: 6px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    height: 10vh;
+    min-height: 30px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    overflow: hidden;
+}
+
+.record-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.record-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+}
+
+.record-item {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.record-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    height: 0;
+    overflow: hidden;
+    transition: opacity 0.3s ease, height 0.3s ease;
+}
+
+.record-card.active .record-actions {
+    opacity: 1;
+    height: 45px;
+}
+
+.record-card.income-card {
+    background-color: rgba(126, 211, 33, 0.1);
+}
+
+.record-card.expense-card {
+    background-color: rgba(255, 107, 107, 0.1);
+}
+
+#accountList {
+    display: none;
+}
+
+.summary-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 3px;
+}
+
+.summary-item {
+    font-size: 1.1rem;
+    font-weight: 500;
+}
+
+.summary-item.income {
+    color: var(--success);
+}
+
+.summary-item.expense {
+    color: var(--danger);
+}
+
+.ratio-bar {
+    width: 100%;
+    height: 8px;
+    background: #e2e8f0;
+    border-radius: 4px;
+    overflow: hidden;
+    display: flex;
+}
+
+.ratio-income {
+    height: 100%;
+    background: var(--success);
+    transition: width 0.5s ease;
+}
+
+.ratio-expense {
+    height: 100%;
+    background: var(--danger);
+    transition: width 0.5s ease;
+}
+
+.summary-total {
+    text-align: center;
+    font-size: 0.9rem;
+    font-weight: 400;
+    color: var(--text-secondary);
+    margin: 3px 0;
+}
+
+#summaryCard {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    margin: 3px 0;
+}
+
+#accountForm, #assetForm {
+    padding: 16px;
+    margin: 0 auto;
+    max-width: 100%;
+}
+
+#accountForm .mb-3.compact, #assetForm .mb-3.compact {
+    margin-top: 1px;
+    margin-bottom: 1px;
+}
+
+#accountForm .form-label, #assetForm .form-label {
+    font-size: 0.8rem;
+    margin-bottom: 4px;
+    font-weight: 500;
+}
+
+#accountForm .form-control, #accountForm .form-select,
+#assetForm .form-control, #assetForm .form-select {
+    font-size: 0.8rem;
+    padding: 8px;
+    height: 36px;
+    border-radius: 4px;
+}
+
+#accountForm .form-select option, #assetForm .form-select option {
+    font-size: 0.8rem;
+}
+
+.card-container {
+    overflow-y: auto;
+    /* max-height: calc(100vh - 120px); */
+}
+
+.assets-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 3px;
+}
+
+.total-assets {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: var(--card-bg);
+    border-radius: 8px;
+    padding: 16px;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 300px;
+    text-align: center;
+}
+
+.total-assets .label {
+    font-size: 0.9rem;
+    font-weight: 400;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+}
+
+.total-assets .value {
+    font-size: 1.4rem;
+    font-weight: 400;
+    color: var(--text-primary);
+}
+
+.asset-card {
+    background: var(--card-bg);
+    border-radius: 8px;
+    padding: 12px;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    max-width: 300px;
+}
+
+.asset-card .label {
+    font-size: 0.9rem;
+    font-weight: 400;
+    color: var(--text-secondary);
+}
+
+.asset-card .value {
+    font-size: 1rem;
+    font-weight: 400;
+    color: var(--text-primary);
+}
+
+#loading {
+    text-align: center;
+    color: var(--text-secondary);
+    padding: 16px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+#loading.visible {
+    opacity: 1;
+}
+
+@media (max-width: 768px) {
+    .stock-container {
+        grid-template-columns: 1fr;
+    }
+
+    .table-container { padding: 3px; }
+
+    .record-card-container {
+        grid-template-columns: 1fr;
+    }
+
+    #accountForm, #assetForm {
+        padding: 8px;
+    }
+
+    #accountForm .form-control, #accountForm .form-select,
+    #assetForm .form-control, #assetForm .form-select {
+        font-size: 0.8rem;
+        height: 36px;
+    }
+
+    #accountForm .form-label, #assetForm .form-label {
+        font-size: 0.8rem;
+    }
+
+    .assets-container {
+        padding: 8px;
+        gap: 8px;
+    }
+
+    .total-assets, .asset-card {
+        max-width: 100%;
+        padding: 12px;
+    }
+
+    .total-assets .label, .asset-card .label {
+        font-size: 0.8rem;
+    }
+
+    .total-assets .value {
+        font-size: 1.2rem;
+    }
+
+    .asset-card .value {
+        font-size: 0.9rem;
+    }
+
+    header.header-container {
+        min-height: 8vh;
+        padding: 6px;
+        gap: 4px;
+    }
+
+    footer.nav-bar {
+        min-height: 8vh;
+        height: auto;
+        padding: 8px;
+    }
+
+    #pageTitle {
+        font-size: 1.4rem;
+    }
+
+    .header-dropdown {
+        width: 120px;
+        height: 36px;
+        font-size: 0.8rem;
+    }
+
+    .nav-button {
+        padding: 8px;
+    }
+
+    .nav-button span {
+        font-size: 0.8rem;
+    }
+
+    .nav-button svg {
+        width: 20px;
+        height: 20px;
+    }
+}
+
+/* 資產卡片樣式 */
+.assetItem-card {
+  background: linear-gradient(145deg, #ffffff, #f0f4f8);
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+  margin-bottom: 3px;
+  transition: all 0.3s ease;
+  overflow: hidden;
+  border: 1px solid #e0e6ed;
+}
+
+.assetItem-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+}
+
+.assetItem-card.active {
+  border-color: #4a89dc;
+  box-shadow: 0 0 0 2px rgba(74, 137, 220, 0.2);
+}
+
+.assetItem-card-inner {
+  width: 95%;
+  padding: 3px;
+}
+
+.assetItem-header {
+  display: flex;
+  justify-content: space-between; /* 這會將內容推向兩端 */
+  align-items: center;
+  width: 100%; /* 確保佔據整個寬度 */
+}
+
+.assetItem-header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px; /* 圖標和文字之間的間距 */
+}
+
+.assetItem-type-icon {
+  font-size: 20px;
+  display: inline-block;
+  width: 30px;
+  height: 30px;
+  line-height: 30px;
+  text-align: center;
+  background-color: #f0f4f8;
+  border-radius: 50%;
+}
+
+.assetItem-item {
+  font-weight: 600;
+  font-size: 16px;
+  color: #333;
+}
+
+.assetItem-price {
+  font-weight: 700;
+  font-size: 18px;
+  color: #2c3e50;
+}
+
+.assetItem-details {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.assetItem-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.assetItem-date, .assetItem-type {
+  color: #7f8c8d;
+  font-size: 13px;
+}
+
+.assetItem-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.btn-record {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background-color: #3498db;
+  color: white;
+  font-weight: 500;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.btn-record:hover {
+  background-color: #2980b9;
+}
+
+.btn-icon {
+  font-size: 14px;
+}
+
+.btn-text {
+  font-size: 14px;
+}
+.control-btn {
+    padding: 8px 24px;
+    border: none;
+    border-radius: 4px;
+    background-color: var(--primary);
+    color: white;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.control-btn.active {
+    background-color: var(--secondary);
+}
+
+.control-btn:hover {
+    background-color: var(--info);
+}
+
+.data-view {
+    display: none;
+}
+
+.data-view.active {
+    display: block;
+}
+.footer-info {
+    text-align: center;
+    margin-top: 20px; /* 與上方內容的間距 */
+    margin-bottom: 20px; /* 與下方導航欄的間距 */
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+.footer-info p {
+    margin: 0; /* 移除 <p> 標籤的預設邊距 */
+}
+
+
+/* CSS for SharePage */
+/* 貼文輸入區域 */
+.post-input-container {
+    background: var(--card-bg);
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 16px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.post-input-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.user-avatar {
+    width: 40px;
+    height: 40px;
+    background: #e0e0e0;
+    border-radius: 50%;
+    background-image: url('https://storage.googleapis.com/supwallet_postdb/defult_avater.jpeg'); /* 替換為實際頭像 */
+    background-size: cover;
+}
+
+.post-input {
+    flex: 1;
+    padding: 10px 16px;
+    border: none;
+    border-radius: 20px;
+    background: #f0f2f5;
+    font-size: 1rem;
+    color: var(--text-primary);
+    cursor: pointer;
+}
+
+.post-input:focus {
+    outline: none;
+    background: #e8ecef;
+}
+
+
+
+.btn-close {
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    cursor: pointer;
+    color: var(--text-secondary);
+}
+
+.post-form-user {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.user-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.user-name {
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.privacy-select {
+    font-size: 0.8rem;
+    padding: 2px 8px;
+    width: auto;
+    background: #f0f2f5;
+    border: none;
+    border-radius: 4px;
+}
+
+.post-textarea {
+    border: none;
+    resize: none;
+    font-size: 1.2rem;
+    padding: 8px 0;
+    background: transparent;
+}
+.post-textarea:focus {
+    outline: none;
+    box-shadow: none;
+}
+
+.image-upload-container {
+    position: relative;
+}
+
+.image-preview {
+    margin-top: 8px;
+    max-height: 200px;
+    overflow: hidden;
+    border-radius: 8px;
+    display: none;
+}
+
+.image-preview img {
+    width: 100%;
+    height: auto;
+    object-fit: cover;
+}
+
+/* 貼文卡片 */
+.posts-container {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.post-card {
+    background: var(--card-bg);
+    border-radius: 8px;
+    padding: 16px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.post-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.post-user {
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--primary);
+}
+
+.post-time {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+.post-list {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+}
+
+.post-content {
+    font-size: 1rem;
+    line-height: 1.5;
+    margin-bottom: 12px;
+}
+
+.post-image {
+    width: 100%;
+    max-height: 400px;
+    object-fit: cover;
+    border-radius: 8px;
+    margin-bottom: 12px;
+}
+
+.post-reactions {
+    display: flex;
+    gap: 8px;
+    border-top: 1px solid #e0e0e0;
+    padding-top: 8px;
+}
+
+.reaction-btn {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: none;
+    border: none;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.reaction-btn:hover {
+    background: #f0f2f5;
+    transform: scale(1.1);
+}
+
+.reaction-count {
+    font-size: 0.8rem;
+}
+
+@media (max-width: 768px) {
+    .modal-content {
+        width: 95%;
+    }
+
+    .post-input {
+        font-size: 0.9rem;
+        padding: 8px 12px;
+    }
+
+    .post-textarea {
+        font-size: 1rem;
+    }
+
+    .post-card {
+        padding: 12px;
+    }
+
+    .post-user {
+        font-size: 0.9rem;
+    }
+
+    .post-content {
+        font-size: 0.9rem;
+    }
+
+    .reaction-btn {
+        font-size: 0.8rem;
+        padding: 4px 6px;
+    }
+}
+#imageZoomModal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#imageZoomModal .modal-content {
+    position: relative;
+}
+
+#zoomedImage {
+    cursor: pointer;
+}
+/* 貼文模態框樣式 */
+#postModal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center; /* 水平置中 */
+    align-items: center; /* 垂直置中 */
+    z-index: 2000;
+}
+/* 控制貼文模態框內容區域 */
+#postModal .modal-content {
+    max-width: 500px; /* 限制最大寬度 */
+    width: 90%; /* 適應行動裝置 */
+    max-height: 80vh; /* 限制最大高度 */
+    overflow-y: auto; /* 內容過長時可滾動 */
+    background: var(--card-bg);
+    border-radius: 8px;
+    padding: 16px;
+    margin: 0 auto; /* 確保水平置中 */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+/* 控制記帳模態框大小 */
+#recordModal .modal-dialog {
+    max-width: 500px; /* 限制最大寬度 */
+    width: 90%; /* 適應行動裝置 */
+}
+/* 行動裝置上的樣式 */
+@media (max-width: 768px) {
+    #postModal .modal-content {
+        max-width: 95%;
+        max-height: 70vh;
+        padding: 12px;
+    }
+}
+
+#recordModal .modal-content {
+    max-height: 80vh; /* 限制最大高度 */
+    overflow-y: auto; /* 內容過長時可滾動 */
+}
+
+/* 登入模態框樣式 */
+#loginModal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center; /* 水平置中 */
+    align-items: center; /* 垂直置中 */
+    z-index: 2000;
+}
+
+/* 控制登入模態框內容區域 */
+#loginModal .login-modal-content {
+    max-width: 400px; /* 限制最大寬度 */
+    width: 90%; /* 適應行動裝置 */
+    max-height: 80vh; /* 限制最大高度 */
+    overflow-y: auto; /* 內容過長時可滾動 */
+    background: var(--card-bg);
+    border-radius: 8px;
+    padding: 16px;
+    margin: 0 auto; /* 確保水平置中 */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* 模態框頁腳連結 */
+.modal-footer-links {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 16px;
+    font-size: 0.9rem;
+}
+
+.footer-link {
+    color: var(--primary);
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.footer-link:hover {
+    color: var(--secondary);
+    text-decoration: underline;
+}
+
+/* 行動裝置上的樣式 */
+@media (max-width: 768px) {
+    #loginModal .login-modal-content {
+        max-width: 95%;
+        max-height: 70vh;
+        padding: 12px;
+    }
+
+    .modal-footer-links {
+        font-size: 0.8rem;
+    }
+}
+
+.image-preview-container {
+    margin-top: 8px;
+    display: flex; /* 使用 flex 布局排列多張圖片 */
+    flex-wrap: wrap; /* 允許換行 */
+    gap: 8px; /* 圖片之間的間距 */
+    max-height: 200px; /* 限制最大高度 */
+    overflow-y: auto; /* 若圖片過多則可滾動 */
+}
+
+.image-preview-item {
+    position: relative;
+    width: 100px; /* 固定預覽圖片寬度 */
+    height: 100px; /* 固定預覽圖片高度 */
+    overflow: hidden;
+    border-radius: 8px;
+    border: 1px solid #e0e0e0; /* 添加邊框以區分圖片 */
+}
+
+.image-preview-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* 確保圖片填滿容器並保持比例 */
+}
+
+@media (max-width: 768px) {
+    .image-preview-item {
+        width: 80px; /* 在小螢幕上縮小預覽尺寸 */
+        height: 80px;
+    }
+}
+
+.post-images-container {
+    position: relative;
+    margin-bottom: 12px;
+}
+
+/* 單圖情況 */
+.post-images-container.single-column {
+    display: block;
+}
+
+/* 輪播情況 */
+.post-images-container.carousel {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    width: 100%;
+    height: 300px; /* 固定高度，可調整 */
+}
+
+.carousel-images {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+.post-image-item {
+    width: 100%;
+    height: 100%; /* 圖片填滿輪播容器 */
+    object-fit: cover;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.carousel-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(0, 0, 0, 0.5);
+    color: white;
+    border: none;
+    padding: 8px;
+    cursor: pointer;
+    z-index: 10;
+}
+
+.carousel-btn.prev {
+    left: 8px;
+}
+
+.carousel-btn.next {
+    right: 8px;
+}
+
+.carousel-indicators {
+    position: absolute;
+    bottom: 8px;
+    display: flex;
+    gap: 4px;
+}
+
+.indicator {
+    width: 8px;
+    height: 8px;
+    background: #ccc;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+.indicator.active {
+    background: #007bff;
+}
+
+@media (max-width: 768px) {
+    .post-images-container.carousel {
+        height: 200px; /* 小螢幕上減小高度 */
+    }
+
+    .post-image-item {
+        height: 100%;
+    }
+}
+
+/* 控制列樣式已存在，這裡調整適配 */
+.control-bar {
+    display: flex;
+    justify-content: flex-end;
+    padding: 5px 0;
+    padding-right: 10px; /* Add some padding to the bar itself */
+    gap: 10px;
+}
+/* 控制列樣式已存在，這裡調整適配 */
+.control-bar.asset-bar {
+    display: flex;
+    /* justify-content: flex-end; */ /* Remove this if using margin: auto */
+    align-items: center; /* Vertically align items in the center */
+    gap: 10px;
+    margin-bottom: 10px;
+    padding: 0 10px; /* Add some padding to the bar itself */
+    min-height: 40px; /* Ensure a minimum height */
+}
+/* Style for the new summary amount */
+.summary-amount {
+    font-size: 1rem;
+    font-weight: 600; /* Make it bold */
+    color: var(--text-primary);
+    /* This pushes the summary to the left and buttons to the right */
+    margin-right: auto;
+    /* Optional: Add padding if needed */
+    padding-right: 10px;
+}
+
+.control-btn {
+    padding: 8px 18px;
+    border: none;
+    border-radius: 4px;
+    background-color: var(--primary);
+    color: white;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    flex-shrink: 0;
+}
+
+.control-btn.active {
+    background-color: var(--secondary);
+}
+
+.control-btn:hover {
+    background-color: var(--info);
+}
+
+/* 開銷追蹤區域樣式 */
+.date-range-container {
+    background-color: var(--card-bg);
+    padding: 3px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.summary-card {
+    background: var(--card-bg);
+    border-radius: 12px;
+    padding: 3px;
+    margin-bottom: 2px;
+    /* border-left: 5px solid var(--primary); */
+    text-align: center;
+}
+
+.chart-container {
+    height: 300px;
+    margin: 0 auto; /* 確保容器在父元素中水平居中 */
+    display: flex; /* 使用 Flexbox 置中內容 */
+    justify-content: center; /* 水平居中 */
+    align-items: center; /* 垂直居中（可選） */
+    max-width: 100%; /* 防止超出父容器 */
+}
+
+/* 確保 canvas 適應容器 */
+#expenseCategoryChart {
+    max-width: 100%;
+    height: auto;
+}
+
+.expense {
+    color: var(--danger);
+}
+
+/* 已有的樣式保持不變，新增以下內容 */
+#datePickerContainer {
+    transition: all 0.3s ease; /* 添加顯示/隱藏的過渡效果 */
+}
+
+#datePickerContainer.hidden {
+    display: none;
+}
+
+/* 確保 spinner 不影響樣式 */
+#submitSpinner {
+    vertical-align: middle;
+}
+
+.category-table-container {
+    margin-top: 20px;
+    width: 100%;
+    max-width: 400px; /* 與圖表寬度一致 */
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.category-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+    color: var(--text-primary, #333);
+}
+
+.category-table th,
+.category-table td {
+    padding: 8px;
+    text-align: center; /* 金額和占比靠右對齊 */
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.category-table th {
+    font-weight: 500;
+    color: var(--text-secondary, #666);
+}
+
+.category-table td:nth-child(2),
+.category-table td:nth-child(3) {
+    text-align: center; /* 金額和占比靠右對齊 */
+}
+
+.category-table .no-data {
+    text-align: center;
+    color: var(--text-secondary, #666);
+}
+
+.help-text {
+    color: #a09e9e; /* 灰黑色，與按鈕文字一致 */
+    font-weight: 1200; /* 粗體，比微粗體 500 更明顯 */
+    font-size: 0.7rem; /* 稍小於正文，提升層次感 */
+    margin-bottom: 3px; /* 與下方內容保持間距 */
+    line-height: 1.4; /* 增加可讀性 */
+}
+
+.ai-assistant-container {
+    margin-top: 3px;
+    padding: 3px;
+    background-color: var(--card-bg, #fff);
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.ai-messages {
+    min-height: 100px; /* 確保有足夠空間顯示訊息 */
+    padding: 10px;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    background-color: #f9f9f9;
+    overflow-y: auto; /* 若訊息過多可滾動 */
+}
+
+.message-placeholder {
+    color: var(--text-secondary, #666);
+    font-style: italic;
+    margin: 0;
+    text-align: center;
+}
+
+/* 未來訊息樣式（預留） */
+.ai-message {
+    margin: 2px 0;
+    padding: 2px;
+    color: #333;
+}
+
+
+/* 記帳表單 CSS */
+.form-section {
+    margin-bottom: 30px;
+}
+
+.form-label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+    color: #333;
+}
+
+.form-input{
+    width: 100%;
+    padding: 3px;
+    border: 1px solid #aaa;
+    border-radius: 4px;
+    font-size: 1rem;
+}
+
+.form-input:focus{
+    outline: none;
+    border-color: #007bff; /* Focus color */
+    box-shadow: 0 0 5px rgba(0, 123, 255, 0.5); /* Subtle shadow */
+}
+
+.input-group {
+    display: flex;
+}
+
+.input-group-text {
+    padding: 0.375rem 0.75rem;
+    font-size: 1rem;
+    font-weight: 400;
+    line-height: 1;
+    color: #495057;
+    text-align: center;
+    white-space: nowrap;
+    background-color: #e9ecef;
+    border: 1px solid #ced4da;
+    border-radius: 0.25rem 0 0 0.25rem;
+}
+
+.fixed-action-buttons {
+    position: fixed; /* 固定定位 */
+    bottom: 90px;  /* 底部距離，需考慮下方導航欄高度 */
+    right: 20px; /* 右側距離 */
+    z-index: 1050; /* 確保在其他元素之上，但在 modal 之下 */
+    display: flex; /* 如果有多個按鈕並排 */
+    gap: 10px; /* 按鈕間距 */
+}
+
+.fixed-submit-btn {
+    padding: 12px 15px; /* 稍大一點的 padding */
+    font-size: 1rem; /* 稍大一點的字體 */
+    border-radius: 15px; /* 圓角或膠囊狀 */
+    border: none; /* 去掉邊框 */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* 添加陰影 */
+    /* 可以根據需要為不同按鈕設置不同背景色 */
+    /* 例如 #submitAccountBtn 用 var(--success) */
+    /* #submitAssetBtn 用 var(--info) */
+}
+
+#submitAccountBtn {
+    background-color: var(--success);
+    color: white;
+}
+
+
+
+#submitAssetBtn {
+    background-color: var(--info);
+    color: white;
+}
+
+/* end for add account and assets btn */
+
+
+.record-actions {
+    display: flex;
+    gap: 8px;
+    /* justify-content: center; */ /* 移除或註釋掉 */
+    justify-content: flex-end; /* 將按鈕推到右邊 */
+    align-items: center;
+    opacity: 0;
+    height: 0;
+    overflow: hidden;
+    transition: opacity 0.3s ease, height 0.3s ease;
+    padding-right: 12px; /* 可選：增加一些右邊距 */
+    padding-bottom: 3px; /* 可選：增加一些底邊距 */
+}
+
+.stock-actions{
+    display: flex;
+    gap: 8px;
+    /* justify-content: center; */ /* 移除或註釋掉 */
+    justify-content: flex-end; /* 將按鈕推到右邊 */
+    align-items: center;
+    opacity: 0;
+    height: 0;
+    overflow: hidden;
+    transition: opacity 0.3s ease, height 0.3s ease;
+    padding-right: 12px; /* 可選：增加一些右邊距 */
+    padding-bottom: 3px; /* 可選：增加一些底邊距 */
+}
+
+/* .assetItem-actions 已經是 flex 且靠右，確認樣式即可 */
+.assetItem-actions {
+  display: flex;
+  justify-content: flex-end; /* 確保是 flex-end */
+  align-items: center; /* 垂直居中 */
+}
+
+
+.stock-details {
+    display: flex;
+    justify-content: space-between; /* 股數靠左，損益靠右 */
+    align-items: center;
+    font-size: 0.9rem; /* 稍小字體 */
+    color: var(--text-secondary);
+}
+
+.stock-profit-loss .arrow {
+    font-size: 1rem; /* 箭頭大小 */
+    line-height: 1; /* 確保箭頭垂直居中 */
+}
+
+/* --- 顏色定義 (沿用之前的) --- */
+.positive { color: var(--success, #28a745); } /* 添加預設顏色 */
+.negative { color: var(--danger, #dc3545); }
+.neutral { color: var(--text-secondary, #6c757d); }
+
+/* --- 操作按鈕區域 --- */
+.stock-actions {
+    display: flex;
+    gap: 10px; /* 按鈕間距 */
+    justify-content: flex-end; /* *** 按鈕靠右 *** */
+    align-items: center;
+    background-color: rgba(0, 0, 0, 0.03); /* 輕微背景區分 */
+    padding: 10px 15px; /* 內邊距 */
+    max-height: 0; /* 初始隱藏高度 */
+    opacity: 0; /* 初始透明 */
+    overflow: hidden;
+    transition: max-height 0.3s ease, opacity 0.3s ease, padding 0.3s ease; /* 平滑過渡 */
+    border-top: 1px solid rgba(0, 0, 0, 0.05); /* 頂部分隔線 */
+    justify-content: flex-end; /* 確保按鈕靠右 */
+}
+
+/* 當卡片被點擊，添加 active class 時顯示 actions */
+.stock-card.active .stock-actions {
+    max-height: 60px; /* 展開時的最大高度 */
+    opacity: 1; /* 完全顯示 */
+    padding: 10px 15px; /* 恢復內邊距 */
+}
+
+/* 按鈕樣式 (可沿用或微調) */
+.btn-buy, .btn-sell {
+    padding: 6px 14px; /* 按鈕大小 */
+    border-radius: 5px;
+    border: none;
+    font-size: 0.85rem;
+    font-weight: 500; /* 中等粗細 */
+    text-transform: uppercase;
+    color: white;
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+.btn-buy {
+    background: var(--success, #28a745);
+}
+.btn-buy:hover {
+    background: #218838; /* 加深顏色 */
+}
+.btn-buy:active {
+    transform: scale(0.95); /* 按下效果 */
+}
+
+.btn-sell {
+    background: var(--danger, #dc3545);
+}
+.btn-sell:hover {
+    background: #c82333; /* 加深顏色 */
+}
+.btn-sell:active {
+    transform: scale(0.95); /* 按下效果 */
+}
+
+/* Container for the entire stock view (header + cards) */
+.stock-view-container {
+    padding: 0 10px 10px 10px; /* Add padding around the view */
+}
+
+/* Styles for the header row */
+.stock-list-header {
+    display: grid; /* 改為 Grid */
+    /* 定義 4 個欄位以及它們的寬度 */
+    /* 1fr (項目) | 20% (股數) | 25% (現值) | 28% (損益) - 百分比可能需要微調 */
+    grid-template-columns: 1fr 18% 25% 28%;
+    gap: 5px; /* 欄位間距 */
+    padding: 8px 10px; /* 調整內邊距 */
+    margin-bottom: 5px;
+    border-bottom: 1px solid var(--primary);
+    background-color: rgba(74, 144, 226, 0.05);
+    border-radius: 5px 5px 0 0;
+    align-items: baseline; /* 垂直對齊方式 */
+}
+
+.header-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--primary);
+    text-align: right; /* 預設靠右 */
+    white-space: nowrap;
+}
+
+.header-label.item-label {
+    text-align: left; /* 項目靠左 */
+}
+
+.header-label.quantity-label{
+    text-align: left;
+}
+.header-label.value-label{
+    text-align: center; /* 現值靠右 */
+}
+.header-label.pl-label{
+    text-align: center; /* 損益靠右 */
+}
+
+/* Container for the actual stock cards - Apply grid here */
+.stock-cards-area {
+    display: grid;
+    grid-template-columns: 1fr; /* Mobile first - single column */
+    gap: 10px; /* Space between cards */
+}
+
+/* Make sure the 'no message' spans the grid if needed */
+.stock-cards-area > .no-account-message {
+    grid-column: 1 / -1; /* Span full width */
+    text-align: center;
+    padding: 20px;
+}
+
+/* 修改 stock-card-content 樣式 */
+.stock-card-content.single-row {
+    display: grid; /* 同樣改為 Grid */
+    /* *** 使用與標題完全相同的欄位定義 *** */
+    grid-template-columns: 1fr 18% 25% 28%;
+    gap: 3px; /* 相同的欄位間距 */
+    align-items: baseline; /* 相同的垂直對齊 */
+    padding: 10px 3px; /* 調整內邊距，讓其視覺上與標題對齊 */
+    /* 移除 Flexbox 相關屬性 */
+    /* justify-content: space-between; */
+    /* flex-wrap: nowrap; */
+}
+
+.sc-item-name {
+    font-weight: 600;
+    color: var(--text-primary);
+    /* text-align: left; 項目名稱靠左 */
+}
+
+.sc-quantity {
+    color: var(--text-secondary);
+}
+
+.sc-current-value {
+    font-weight: 600;
+    text-align: center; /* 右對齊 */
+    /* 顏色由 positive/negative/neutral class 控制 */
+}
+
+.sc-profit-loss {
+    font-weight: 500;
+    font-size: 0.9rem; /* 損益部分字體可再小一點 */
+    /* 顏色由 positive/negative/neutral class 控制 */
+    display: inline-flex; /* 使用 inline-flex 讓內部元素也能很好對齊 */
+    gap: 2px; /* 內部元素間距 */
+    text-align: right;
+}
+
+.sc-profit-loss .arrow {
+    font-size: 0.9rem; /* 箭頭大小 */
+}
+
+header.header-container {
+    /* --- 保留你原有的樣式 --- */
+    background: var(--card-bg);
+    padding: 12px 16px; /* 可以微調 padding */
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    padding-top: env(safe-area-inset-top);
+    transition: transform 0.3s ease;
+    /* --- 修改或添加以下 Flexbox 屬性 --- */
+    display: flex;             /* 確保是 Flexbox 佈局 */
+    flex-direction: row;       /* <-- 主要修改：設定為水平排列 (預設值，也可省略此行) */
+    align-items: center;       /* <-- 垂直居中對齊 (讓 H1, span, button 在垂直方向置中) */
+    justify-content: flex-start; /* <-- 水平靠左對齊 (讓元素從左開始排) */
+    /* 如果你想讓標題/用戶名靠左，登出按鈕靠最右，可以用 space-between，但 margin-left: auto; 通常更好 */
+    /* justify-content: space-between; */
+    gap: 8px;                 /* <-- 元素之間的水平間距 (可調整) */
+    flex-wrap: wrap;           /* <-- 允許在小螢幕換行 (之前已有) */
+
+    /* --- 移除或修改以下可能衝突的樣式 --- */
+    /* text-align: center; */  /* <-- 移除或註解掉，避免影響 Flexbox 內部對齊 */
+    /* justify-content: center; */ /* <-- 移除或註解掉 (除非你就是要整體居中) */
+    /* flex-direction: column; */ /* <-- 移除或註解掉 */
+    /* align-items: center; */  /* <-- 這個配合 row 是垂直居中，通常需要保留 */
+}
+
+/* 可以稍微調整 H1 標題的 margin，確保對齊 */
+#pageTitle {
+    margin: 0;
+    font-size: 1.5rem; /* 或根據你的設計調整 */
+    font-weight: 400;
+    flex-shrink: 0; /* 防止標題被壓縮 */
+}
+
+/* 用戶名 Span 的樣式 (之前提供過，可微調) */
+.header-username {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin-left: 8px; /* 與標題的間距 */
+    margin-right: 8px; /* 與登出按鈕的間距 */
+    font-weight: 600;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+/* 登出按鈕的樣式 (之前提供過，確認 margin-left: auto) */
+#logoutButton {
+    padding: 4px 8px;
+    font-size: 0.85rem;
+    margin-left: auto; /* <-- 這個是將按鈕推到最右邊的關鍵 (在 flex-start 或預設 justify 下) */
+    flex-shrink: 0; /* 防止按鈕被壓縮 */
+}
+
+/* 針對小螢幕的調整 (可以保留或修改) */
+@media (max-width: 768px) {
+    header.header-container {
+        padding: 8px 12px; /* 調整內邊距 */
+        gap: 5px;          /* 調整間距 */
+        /* flex-wrap: wrap; */ /* 確保允許換行 */
+    }
+    #pageTitle {
+        font-size: 1.3rem; /* 調整字體大小 */
+    }
+    .header-username {
+         max-width: 80px; /* 縮小最大寬度 */
+         font-size: 0.8rem;
+         margin-left: 5px;
+         margin-right: 5px;
+    }
+    #logoutButton {
+         font-size: 0.8rem;
+         padding: 3px 6px;
+    }
+}
+
+#recordsSection .view-toggle-bar .control-btn {
+    padding: 6px 16px;          /* 保留或調整內邊距 */
+    font-size: 0.9rem;          /* 保留或調整字體大小 */
+    background-color: transparent; /* <-- 主要修改：設置背景為透明 */
+    color: var(--text-secondary);/* <-- 設置預設文字顏色 (例如灰色) */
+    border: none;               /* <-- 移除邊框 (如果你不想要邊框的話) */
+    border-radius: 4px;         /* 保留圓角 */
+    cursor: pointer;            /* 保持鼠標樣式 */
+    transition: color 0.3s ease, background-color 0.3s ease, border-color 0.3s ease; /* 過渡效果 */
+    margin: 2px 0;
+    /* (可選) 添加底部邊框作為視覺區隔 */
+    border-bottom: 2px solid transparent; /* 預設透明邊框 */
+}
+
+/* 設定「非啟用」按鈕在滑鼠移過 (hover) 時的樣式 */
+#recordsSection .view-toggle-bar .control-btn:not(.active):hover {
+    color: var(--text-primary);     /* <-- 滑鼠移過時文字變深 */
+    background-color: rgba(0, 0, 0, 0.05); /* <-- 可選：非常淡的背景色 */
+}
+
+/* 設定「啟用 (active)」按鈕的樣式 */
+#recordsSection .view-toggle-bar .control-btn.active {
+    background-color: transparent; /* <-- 確保啟用狀態背景也是透明 */
+    color: var(--primary);        /* <-- 使用主題色或其他醒目顏色 */
+    font-weight: 600;             /* <-- 可以加粗字體 */
+    border-bottom-color: var(--primary); /* <-- 顯示底部邊框顏色 */
+}
+
+/* --- 結束修改/新增 --- */
+
+/* 確保 .view-toggle-bar 的樣式存在 (之前已提供) */
+.view-toggle-bar {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 1rem;
+}
+
+/* 控制視圖容器的顯示/隱藏 */
+.ledger-view { /* 新增的 class */
+    display: none; /* 預設隱藏 */
+}
+
+.ledger-view.active {
+    display: block; /* 活動狀態顯示 */
+}
+
+header.header-container {
+    /* ... 保留背景、邊框、sticky、z-index 等 ... */
+    background: var(--card-bg);
+    padding: 10px 16px; /* 可以調整 padding */
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    padding-top: env(safe-area-inset-top);
+    transition: transform 0.3s ease;
+
+    /* --- 主要修改佈局 --- */
+    display: flex;
+    flex-direction: row;    /* 水平排列 */
+    align-items: center;    /* 垂直居中 */
+    justify-content: space-between; /* 將內容推向兩端 (登出時標題靠左，登入時用戶資訊靠左，登出連結靠右) */
+    min-height: 50px; /* 設定一個最小高度 */
+
+    /* --- 移除舊的或衝突的 --- */
+    /* text-align: center; */
+    /* flex-direction: column; */
+    /* justify-content: center; */
+    /* gap: 5px; */ /* 用 space-between 或 margin 控制間距 */
+}
+
+/* 登入/登出狀態容器的基本樣式 */
+.header-content {
+    display: flex;
+    align-items: center;
+    gap: 10px; /* 內部元素間距 */
+    width: 100%; /* 確保容器佔滿寬度以應用 justify-content */
+}
+#headerLoggedIn {
+    margin-top: 15px;
+    justify-content: center; /* 讓登入後的內容整體靠右 (可選) */
+}
+
+
+/* 應用程式標題 (登出狀態) */
+.header-app-title {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--primary);
+}
+
+/* 問候語 */
+.header-greeting {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+#headerUserId {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+/* 分隔符 */
+.header-separator {
+    color: #ccc;
+    margin: 0 5px; /* 分隔符左右留空 */
+}
+
+/* Header 中的連結 */
+.header-link {
+    font-size: 0.9rem;
+    color: var(--primary);
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+.header-link:hover {
+    color: var(--secondary);
+    text-decoration: underline;
+}
+
+/* 將登出連結推到最右邊 (如果 #headerLoggedIn 使用 flex-start) */
+/*
+#headerLogoutLink {
+    margin-left: auto;
+}
+*/
+
+/* 頁面內部標題樣式 (新的 H2) */
+.page-section-title {
+    font-size: 1.4rem;
+    font-weight: 500;
+    margin: 10px 0 15px 5px; /* 調整邊距 */
+    color: var(--text-primary);
+}
